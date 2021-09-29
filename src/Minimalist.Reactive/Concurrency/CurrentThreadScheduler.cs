@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Minimalist.Reactive.Concurrency
 {
-    public class CurrentThreadScheduler : IScheduler
+    public sealed class CurrentThreadScheduler : IScheduler
     {
-        private static readonly Lazy<CurrentThreadScheduler> StaticInstance = new Lazy<CurrentThreadScheduler>(() => new CurrentThreadScheduler());
+        private static readonly Lazy<CurrentThreadScheduler> StaticInstance = new(() => new CurrentThreadScheduler());
 
         private CurrentThreadScheduler()
         {
@@ -19,7 +19,7 @@ namespace Minimalist.Reactive.Concurrency
         /// </summary>
         public static CurrentThreadScheduler Instance => StaticInstance.Value;
 
-        public DateTimeOffset Now => throw new NotImplementedException();
+        public DateTimeOffset Now => DateTimeOffset.UtcNow;
 
         public IDisposable Schedule<TState>(TState state, Func<IScheduler, TState, IDisposable> action)
         {

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Minimalist.Reactive.Concurrency
 {
-    public class VirtualTimeSchedulerNew : IScheduler
+    public class VirtualTimeScheduler : IScheduler
     {
         public DateTimeOffset Now => throw new NotImplementedException();
 

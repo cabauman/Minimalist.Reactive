@@ -1,6 +1,4 @@
-﻿using Minimalist.Reactive.Linq.ObservableImpl;
-
-namespace Minimalist.Reactive
+﻿namespace Minimalist.Reactive.Linq
 {
     public static class ObservableExtensions
     {

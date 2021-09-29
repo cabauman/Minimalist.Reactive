@@ -1,4 +1,4 @@
-﻿namespace Minimalist.Reactive.Linq.ObservableImpl
+﻿namespace Minimalist.Reactive.Linq
 {
     internal sealed class WhereOperator<T> : IObservable<T>
     {

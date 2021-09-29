@@ -1,4 +1,4 @@
-﻿namespace Minimalist.Reactive.Linq.ObservableImpl
+﻿namespace Minimalist.Reactive.Linq
 {
     internal sealed class SelectOperator<T, TResult> : IObservable<TResult>
     {

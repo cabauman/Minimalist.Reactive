@@ -5,9 +5,11 @@ VisualStudioVersion = 17.0.31710.8
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Minimalist.Reactive", "Minimalist.Reactive\Minimalist.Reactive.csproj", "{8999C385-6D33-457C-B686-04B7B8A355B8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minimalist.Sandbox", "Minimalist.Sandbox\Minimalist.Sandbox.csproj", "{DA801C64-7900-41CB-ACEF-B0240B96F6AC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Minimalist.Reactive.Sandbox", "Minimalist.Sandbox\Minimalist.Reactive.Sandbox.csproj", "{DA801C64-7900-41CB-ACEF-B0240B96F6AC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minimalist.Reactive.Tests", "Minimalist.Reactive.Tests\Minimalist.Reactive.Tests.csproj", "{A2EBEC49-3DE6-4FAA-A9EE-A95A573E6728}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Minimalist.Reactive.Tests", "Minimalist.Reactive.Tests\Minimalist.Reactive.Tests.csproj", "{A2EBEC49-3DE6-4FAA-A9EE-A95A573E6728}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minimalist.Reactive.Testing", "Minimalist.Reactive.Testing\Minimalist.Reactive.Testing.csproj", "{EBC88BE7-82ED-407D-B1F3-984317936346}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +29,10 @@ Global
 		{A2EBEC49-3DE6-4FAA-A9EE-A95A573E6728}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A2EBEC49-3DE6-4FAA-A9EE-A95A573E6728}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A2EBEC49-3DE6-4FAA-A9EE-A95A573E6728}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EBC88BE7-82ED-407D-B1F3-984317936346}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EBC88BE7-82ED-407D-B1F3-984317936346}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EBC88BE7-82ED-407D-B1F3-984317936346}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EBC88BE7-82ED-407D-B1F3-984317936346}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
