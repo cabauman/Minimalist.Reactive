@@ -2,7 +2,7 @@
 
 namespace Minimalist.Reactive
 {
-    internal static class ObservableExtensions
+    public static class ObservableExtensions
     {
         public static IObservable<T> Where<T>(this IObservable<T> source, Func<T, bool> predicate)
         {

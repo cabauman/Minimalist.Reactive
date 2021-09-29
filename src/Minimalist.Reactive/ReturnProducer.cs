@@ -1,6 +1,6 @@
 ﻿namespace Minimalist.Reactive
 {
-    internal class ReturnProducer<T> : IObservable<T>
+    public class ReturnProducer<T> : IObservable<T>
     {
         private readonly T _value;
 
@@ -12,6 +12,7 @@
         public IDisposable Subscribe(IObserver<T> observer)
         {
             observer.OnNext(_value);
+            observer.OnCompleted();
             return Disposable.Empty;
         }
     }
@@ -22,7 +23,7 @@
 
         public void Dispose()
         {
-            throw new NotImplementedException();
+            Console.WriteLine("Dispose");
         }
     }
 }
