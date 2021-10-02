@@ -1,26 +1,26 @@
-﻿using Minimalist.Reactive.Linq;
+﻿using Minimalist.Reactive;
+using Minimalist.Reactive.Linq;
+using Minimalist.Reactive.SourceGenerator;
+using Minimalist.Reactive.SourceGenerator.Sandbox;
 
-public partial class MyCoolClass
+namespace Hello
 {
-    public MyCoolClass()
+    public partial class MyCoolClass
     {
-        //MyRxProperty.Subscribe();
-    }
+        public MyCoolClass()
+        {
+            DoSomethingProperty.Subscribe(new LogObserver<int>());
+        }
 
-    public static void Main()
-    {
-    }
+        public static void Main()
+        {
+            var x = new MyCoolClass();
+        }
 
-    [Rxify]
-    public IObservable<string> DoSomething()
-    {
-        return Observable.Return(1)
-            .Where(x => x > 0)
-            .Select(x => x.ToString());
-    }
-
-    [AttributeUsage(AttributeTargets.Method)]
-    public class Rxify : Attribute
-    {
+        [Rxify]
+        public IObservable<int> DoSomething()
+        {
+            return Observable.Return(1).Where(x => x > 0);
+        }
     }
 }
