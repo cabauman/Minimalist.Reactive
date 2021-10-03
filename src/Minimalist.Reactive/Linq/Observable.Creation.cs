@@ -12,7 +12,7 @@ namespace Minimalist.Reactive.Linq
         /// <returns>An observable sequence containing the single specified element.</returns>
         public static IObservable<TResult> Return<TResult>(TResult value)
         {
-            return new ReturnOperator<TResult>(value);
+            return new ReturnImmediate<TResult>(value);
         }
     }
 }

@@ -6,4 +6,11 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="Linq\Operators\Combination\" />
+    <Folder Include="Linq\Operators\ErrorHandling\" />
+    <Folder Include="Linq\Operators\Utility\" />
+    <Folder Include="Linq\Operators\TimeShifting\" />
+  </ItemGroup>
+
 </Project>

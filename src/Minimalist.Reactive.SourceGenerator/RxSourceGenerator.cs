@@ -50,87 +50,87 @@ namespace Minimalist.Reactive
                 }
             }
 
-//            var className = "";
-//            var wherePredicate = "";
-//            var returnArg = "";
-//            var methods = new List<string>();
-//            foreach (var invocationExpression in syntaxReceiver.Candidates)
-//            {
-//                var model = compilation.GetSemanticModel(invocationExpression.SyntaxTree);
-//                var symbol = model.GetSymbolInfo(invocationExpression).Symbol;
+            //            var className = "";
+            //            var wherePredicate = "";
+            //            var returnArg = "";
+            //            var methods = new List<string>();
+            //            foreach (var invocationExpression in syntaxReceiver.Candidates)
+            //            {
+            //                var model = compilation.GetSemanticModel(invocationExpression.SyntaxTree);
+            //                var symbol = model.GetSymbolInfo(invocationExpression).Symbol;
 
-//                if (symbol is not IMethodSymbol methodSymbol)
-//                {
-//                    continue;
-//                }
+            //                if (symbol is not IMethodSymbol methodSymbol)
+            //                {
+            //                    continue;
+            //                }
 
-//                className = methodSymbol.ContainingType.Name;
-//                string methodName = methodSymbol.ContainingType.Name;
-//                if (methodName == "Return")
-//                {
-//                    returnArg = invocationExpression.ArgumentList.Arguments[0].GetFirstToken().ValueText;
-//                    continue;
-//                }
+            //                className = methodSymbol.ContainingType.Name;
+            //                string methodName = methodSymbol.ContainingType.Name;
+            //                if (methodName == "Return")
+            //                {
+            //                    returnArg = invocationExpression.ArgumentList.Arguments[0].GetFirstToken().ValueText;
+            //                    continue;
+            //                }
 
-//                var args = methodSymbol.Parameters.Select(x => $"{x.Type.ToDisplayString()} {x.Name}");
-//                var argsString = string.Join(", ", args);
-//                //foreach (var argument in invocationExpression.ArgumentList.Arguments)
-//                //{
+            //                var args = methodSymbol.Parameters.Select(x => $"{x.Type.ToDisplayString()} {x.Name}");
+            //                var argsString = string.Join(", ", args);
+            //                //foreach (var argument in invocationExpression.ArgumentList.Arguments)
+            //                //{
 
-//                //}
+            //                //}
 
-//                string body = "";
-//                //if (methodName == "Return")
-//                //{
-//                //    body = "return value";
-//                //}
-//                if (methodName == "Where")
-//                {
-//                    body = "return predicate(value);";
-//                    wherePredicate = invocationExpression.ArgumentList.Arguments[0].ToString();
-//                }
-//                else if (methodName == "Select")
-//                {
-//                    body = "return selector(value);";
-//                }
+            //                string body = "";
+            //                //if (methodName == "Return")
+            //                //{
+            //                //    body = "return value";
+            //                //}
+            //                if (methodName == "Where")
+            //                {
+            //                    body = "return predicate(value);";
+            //                    wherePredicate = invocationExpression.ArgumentList.Arguments[0].ToString();
+            //                }
+            //                else if (methodName == "Select")
+            //                {
+            //                    body = "return selector(value);";
+            //                }
 
-//                var methodTemplate = $@"
-//private bool {methodName}(int value, {argsString})
-//{{
-//{body}
-//}}
-//";
-//                methods.Add(methodTemplate);
-//            }
+            //                var methodTemplate = $@"
+            //private bool {methodName}(int value, {argsString})
+            //{{
+            //{body}
+            //}}
+            //";
+            //                methods.Add(methodTemplate);
+            //            }
 
-//            var methodsString = string.Join("\n\n", methods);
+            //            var methodsString = string.Join("\n\n", methods);
 
-//            var source = $@"
-//using System;
-//using Minimalist.Reactive.Linq;
-//using Minimalist.Reactive.Disposables;
-//public partial class {className}
-//{{
-//    public IObservable<int> DoSomethingProperty {{ get; }} = new MyObservable();
+            //            var source = $@"
+            //using System;
+            //using Minimalist.Reactive.Linq;
+            //using Minimalist.Reactive.Disposables;
+            //public partial class {className}
+            //{{
+            //    public IObservable<int> DoSomethingProperty {{ get; }} = new MyObservable();
 
-//    private class MyObservable : IObservable<int>
-//    {{
-//        public IDisposable Subscribe(IObserver<int> observer)
-//        {{
-//            var x = {returnArg};
-//            if (!Where(x, {wherePredicate}))
-//            {{
-//                observer.OnCompleted();
-//                return Disposable.Empty;
-//            }}
-//            observer.OnNext(x);
-//            observer.OnCompleted();
-//            return Disposable.Empty;
-//        }}
+            //    private class MyObservable : IObservable<int>
+            //    {{
+            //        public IDisposable Subscribe(IObserver<int> observer)
+            //        {{
+            //            var x = {returnArg};
+            //            if (!Where(x, {wherePredicate}))
+            //            {{
+            //                observer.OnCompleted();
+            //                return Disposable.Empty;
+            //            }}
+            //            observer.OnNext(x);
+            //            observer.OnCompleted();
+            //            return Disposable.Empty;
+            //        }}
 
-//{methodsString}
-//    }}
-//}}";
+            //{methodsString}
+            //    }}
+            //}}";
             //context.AddSource($"MyCoolClass.g.cs", SourceText.From(source, Encoding.UTF8));
         }
 
@@ -212,3 +212,48 @@ namespace {namespaceName}
         }
     }
 }
+
+//private class DoSomethingObservable : IObservable<int>
+//{
+//    public IDisposable Subscribe(IObserver<int> observer)
+//    {
+//        while (true)
+//        {
+//            var x = 1;
+//            if (!(x > 0))
+//            {
+//                continue;
+//            }
+//            var s1 = x.ToString();
+//            if (!(s1.Length > 0))
+//            {
+//                continue;
+//            }
+//            observer.OnNext(x);
+//        }
+//        observer.OnCompleted();
+//        return Disposable.Empty;
+//    }
+//}
+
+//private class DoSomethingObservable : IObservable<int>
+//{
+//    public IDisposable Subscribe(IObserver<int> observer)
+//    {
+//        scheduler.Schedule(TimerTick, period);
+//    }
+
+//    private void TimerTick(int value)
+//    {
+//        if (!(value > 0))
+//        {
+//            return;
+//        }
+//        observeOnScheduler1.Schedule(ObsverveOnTick1);
+//    }
+
+//    private void ObsverveOnTick1()
+//    {
+//        observer.OnNext(x);
+//    }
+//}

@@ -4,10 +4,11 @@ using Minimalist.Reactive.Sandbox;
 using Minimalist.Reactive.Linq;
 
 var o = Observable.Return(1)
-    .Where(x => x > 0)
-    .Select(x => x.ToString());
-o.Subscribe(new LogObserver<string>());
+    .Where(x => x < 0)
+    .Select(x => x.ToString())
+    .Count();
+o.Subscribe(new LogObserver<int>());
 await Task.Delay(1000);
-o.Subscribe(new LogObserver<string>());
+o.Subscribe(new LogObserver<int>());
 
 await Task.Delay(1000);

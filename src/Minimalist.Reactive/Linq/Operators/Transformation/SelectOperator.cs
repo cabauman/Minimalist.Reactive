@@ -36,13 +36,11 @@
             public void OnCompleted()
             {
                 _observer.OnCompleted();
-                // Dispose upstream and set observer to a NoOp observer.
             }
 
             public void OnError(Exception error)
             {
                 _observer.OnError(error);
-                // Dispose upstream and set observer to a NoOp observer.
             }
         }
     }

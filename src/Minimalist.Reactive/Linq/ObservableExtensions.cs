@@ -11,5 +11,20 @@
         {
             return new SelectOperator<T, TResult>(source, selector);
         }
+
+        public static IObservable<int> Count<T>(this IObservable<T> source)
+        {
+            return new CountOperator<T>(source);
+        }
+
+        public static IObservable<int> Count<T>(this IObservable<T> source, Func<T, bool> predicate)
+        {
+            return new PredicateCountOperator<T>(source, predicate);
+        }
+
+        public static IObservable<bool> All<T, TResult>(this IObservable<T> source, Func<T, bool> predicate)
+        {
+            return new AllOperator<T>(source, predicate);
+        }
     }
 }
