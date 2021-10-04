@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Minimalist.Reactive.Testing\Minimalist.Reactive.Testing.csproj" />
     <ProjectReference Include="..\Minimalist.Reactive\Minimalist.Reactive.csproj" />
   </ItemGroup>
 

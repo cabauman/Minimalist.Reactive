@@ -14,13 +14,16 @@
         public IDisposable Subscribe(IObserver<T> observer)
         {
             var x = new Where(observer, _predicate);
-            return _source.Subscribe(x);
+            var subscription = _source.Subscribe(x);
+            x.SetSubscription(subscription);
+            return subscription;
         }
 
-        internal sealed class Where : IObserver<T>
+        internal sealed class Where : IObserver<T>, IDisposable
         {
-            private readonly IObserver<T> _observer;
+            private IObserver<T> _observer;
             private readonly Func<T, bool> _predicate;
+            private IDisposable? _subscription;
 
             public Where(IObserver<T> observer, Func<T, bool> predicate)
             {
@@ -39,13 +42,26 @@
             public void OnCompleted()
             {
                 _observer.OnCompleted();
-                // Dispose upstream and set observer to a NoOp observer.
+                Dispose();
             }
 
             public void OnError(Exception error)
             {
                 _observer.OnError(error);
-                // Dispose upstream and set observer to a NoOp observer.
+                Dispose();
+            }
+
+            public void SetSubscription(IDisposable subscription)
+            {
+                _subscription = subscription;
+            }
+
+            public void Dispose()
+            {
+                if (Interlocked.Exchange(ref _observer, NopObserver<T>.Instance) != NopObserver<T>.Instance)
+                {
+                    _subscription?.Dispose();
+                }
             }
         }
     }

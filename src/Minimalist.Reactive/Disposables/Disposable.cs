@@ -1,8 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT License.
-// See the LICENSE file in the project root for more information.
-
-namespace Minimalist.Reactive.Disposables
+﻿namespace Minimalist.Reactive.Disposables
 {
     /// <summary>
     /// Provides a set of static methods for creating <see cref="IDisposable"/> objects.
@@ -17,7 +13,7 @@ namespace Minimalist.Reactive.Disposables
             /// <summary>
             /// Singleton default disposable.
             /// </summary>
-            public static readonly EmptyDisposable Instance = new EmptyDisposable();
+            public static readonly EmptyDisposable Instance = new();
 
             private EmptyDisposable()
             {

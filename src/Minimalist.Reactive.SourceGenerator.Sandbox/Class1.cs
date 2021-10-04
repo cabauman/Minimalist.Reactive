@@ -1,6 +1,5 @@
 ﻿using Minimalist.Reactive;
 using Minimalist.Reactive.Linq;
-using Minimalist.Reactive.SourceGenerator;
 using Minimalist.Reactive.SourceGenerator.Sandbox;
 
 namespace Hello

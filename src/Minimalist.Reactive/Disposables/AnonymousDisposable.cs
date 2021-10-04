@@ -1,8 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT License.
-// See the LICENSE file in the project root for more information.
-
-namespace Minimalist.Reactive.Disposables
+﻿namespace Minimalist.Reactive.Disposables
 {
     /// <summary>
     /// Represents an Action-based disposable.
@@ -41,15 +37,15 @@ namespace Minimalist.Reactive.Disposables
     /// </summary>
     internal sealed class AnonymousDisposable<TState> : ICancelable
     {
-        private TState _state;
-        private volatile Action<TState>? _dispose;
+        private TState? _state;
+        private Action<TState?>? _dispose;
 
         /// <summary>
         /// Constructs a new disposable with the given action used for disposal.
         /// </summary>
         /// <param name="state">The state to be passed to the disposal action.</param>
         /// <param name="dispose">Disposal action which will be run upon calling Dispose.</param>
-        public AnonymousDisposable(TState state, Action<TState> dispose)
+        public AnonymousDisposable(TState state, Action<TState?> dispose)
         {
             System.Diagnostics.Debug.Assert(dispose != null);
 
@@ -68,7 +64,7 @@ namespace Minimalist.Reactive.Disposables
         public void Dispose()
         {
             Interlocked.Exchange(ref _dispose, null)?.Invoke(_state);
-            _state = default!;
+            _state = default;
         }
     }
 }

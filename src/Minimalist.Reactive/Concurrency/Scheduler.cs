@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Minimalist.Reactive.Concurrency
+﻿namespace Minimalist.Reactive.Concurrency
 {
-    public static class Scheduler
+    public static partial class Scheduler
     {
         /// <summary>
         /// Normalizes the specified <see cref="TimeSpan"/> value to a positive value.

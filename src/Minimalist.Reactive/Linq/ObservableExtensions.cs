@@ -26,5 +26,21 @@
         {
             return new AllOperator<T>(source, predicate);
         }
+
+        public static IObservable<Notification<TSource>> Materialize<TSource>(this IObservable<TSource> source)
+        {
+            return new MaterializeOperator<TSource>(source);
+        }
+
+        public static IEnumerable<TSource> ToEnumerable<TSource>(this IObservable<TSource> source)
+        {
+            return new AnonymousEnumerable<TSource>(() => source.GetEnumerator());
+        }
+
+        public static IEnumerator<TSource> GetEnumerator<TSource>(this IObservable<TSource> source)
+        {
+            var e = new GetEnumerator<TSource>();
+            return e.Run(source);
+        }
     }
 }
