@@ -11,9 +11,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Minimalist.Reactive.Tests",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Minimalist.Reactive.Testing", "Minimalist.Reactive.Testing\Minimalist.Reactive.Testing.csproj", "{EBC88BE7-82ED-407D-B1F3-984317936346}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minimalist.Reactive.SourceGenerator", "Minimalist.Reactive.SourceGenerator\Minimalist.Reactive.SourceGenerator.csproj", "{0D274B89-940F-40EC-83C3-5E43E4F10959}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Minimalist.Reactive.SourceGenerator", "Minimalist.Reactive.SourceGenerator\Minimalist.Reactive.SourceGenerator.csproj", "{0D274B89-940F-40EC-83C3-5E43E4F10959}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minimalist.Reactive.SourceGenerator.Sandbox", "Minimalist.Reactive.SourceGenerator.Sandbox\Minimalist.Reactive.SourceGenerator.Sandbox.csproj", "{A867BF75-D4E1-43DF-8786-F02846C9D1A4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Minimalist.Reactive.SourceGenerator.Sandbox", "Minimalist.Reactive.SourceGenerator.Sandbox\Minimalist.Reactive.SourceGenerator.Sandbox.csproj", "{A867BF75-D4E1-43DF-8786-F02846C9D1A4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minimalist.Reactive.SourceGenerator.Tests", "Minimalist.Reactive.SourceGenerator.Tests\Minimalist.Reactive.SourceGenerator.Tests.csproj", "{51D1BA9D-D1BC-4901-8B29-17FFD9AC26CC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{A867BF75-D4E1-43DF-8786-F02846C9D1A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A867BF75-D4E1-43DF-8786-F02846C9D1A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A867BF75-D4E1-43DF-8786-F02846C9D1A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{51D1BA9D-D1BC-4901-8B29-17FFD9AC26CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{51D1BA9D-D1BC-4901-8B29-17FFD9AC26CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{51D1BA9D-D1BC-4901-8B29-17FFD9AC26CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{51D1BA9D-D1BC-4901-8B29-17FFD9AC26CC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
