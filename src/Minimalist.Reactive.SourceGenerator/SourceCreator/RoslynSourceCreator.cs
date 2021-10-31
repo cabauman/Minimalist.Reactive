@@ -1,18 +1,15 @@
 ﻿using Minimalist.Reactive.SourceGenerator.OperatorData;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Minimalist.Reactive.SourceGenerator.SourceCreator
 {
     internal class RoslynSourceCreator : ISourceCreator
     {
-        public string Create(Where operatorData)
+        public OperatorResult Return(OperatorDatum operatorData)
         {
             throw new NotImplementedException();
         }
 
-        public string Create(Return operatorData)
+        public OperatorResult Where(OperatorDatum operatorData)
         {
             throw new NotImplementedException();
         }

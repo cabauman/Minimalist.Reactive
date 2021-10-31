@@ -44,6 +44,7 @@ namespace Minimalist.Reactive.SourceGenerator
                     return;
                 }
 
+                // TODO: Check if return type is IObservable.
                 if (methodSymbol.GetAttributes().Any(attributeData => attributeData.AttributeClass?.ToDisplayString() == "Minimalist.Reactive.RxifyAttribute"))
                 {
                     Candidates.Add(new Data() { Symbol = methodSymbol, Syntax = methodDeclarationSyntax });

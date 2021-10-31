@@ -27,7 +27,7 @@ namespace Minimalist.Reactive.SourceGenerator.Tests
         {
             var sources = new[] { Source };
             var compilation = CompilationUtil.CreateCompilation(sources);
-            var newCompilation = CompilationUtil.RunGenerators(compilation, out var generatorDiagnostics, new RxSourceGenerator());
+            var newCompilation = CompilationUtil.RunGenerators(compilation, out var generatorDiagnostics, new OptimizedRxGenerator());
 
             var generatedSource = string.Join(Environment.NewLine, newCompilation.SyntaxTrees.Select(x => x.ToString()));
             TestContext.WriteLine(generatedSource);
