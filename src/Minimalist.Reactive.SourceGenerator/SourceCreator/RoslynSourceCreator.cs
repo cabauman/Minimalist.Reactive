@@ -4,12 +4,12 @@ namespace Minimalist.Reactive.SourceGenerator.SourceCreator
 {
     internal class RoslynSourceCreator : ISourceCreator
     {
-        public OperatorResult Return(OperatorDatum operatorData)
+        public OperatorResult Return(IOperatorDatum operatorData)
         {
             throw new NotImplementedException();
         }
 
-        public OperatorResult Where(OperatorDatum operatorData)
+        public OperatorResult Where(IOperatorDatum operatorData)
         {
             throw new NotImplementedException();
         }

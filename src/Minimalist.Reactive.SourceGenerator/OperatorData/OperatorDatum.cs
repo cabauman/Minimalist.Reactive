@@ -1,17 +1,17 @@
-﻿namespace Minimalist.Reactive.SourceGenerator.OperatorData
+﻿using Minimalist.Reactive.SourceGenerator.SourceCreator;
+
+namespace Minimalist.Reactive.SourceGenerator.OperatorData
 {
-    internal class OperatorDatum
+    internal interface IOperatorDatum
     {
-        public OperatorDatum(string operatorName, IReadOnlyList<ArgDatum> argData)
-        {
-            Name = operatorName;
-            ArgData = argData;
-        }
+        string Name { get; }
 
-        public string Name { get; }
+        bool RequiresScheduling { get; }
 
-        public IReadOnlyList<ArgDatum> ArgData { get; }
+        IReadOnlyList<ArgDatum> ArgData { get; }
 
-        //IReadOnlyList<FieldDatum> RequiredFields { get; }
+        IReadOnlyList<FieldDatum> Fields { get; }
+
+        OperatorResult GetSource(RxSourceCreatorContext context);
     }
 }

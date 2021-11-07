@@ -1,4 +1,5 @@
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using System;
 using System.Linq;
 using Xunit;
@@ -30,6 +31,7 @@ namespace Minimalist.Reactive.SourceGenerator.Tests
             var newCompilation = CompilationUtil.RunGenerators(compilation, out var generatorDiagnostics, new OptimizedRxGenerator());
 
             var generatedSource = string.Join(Environment.NewLine, newCompilation.SyntaxTrees.Select(x => x.ToString()));
+            generatedSource = SyntaxFactory.ParseSyntaxTree(generatedSource).GetRoot().NormalizeWhitespace().ToFullString();
             TestContext.WriteLine(generatedSource);
 
             var compilationDiagnostics = newCompilation.GetDiagnostics();
@@ -49,6 +51,7 @@ namespace Minimalist.Reactive.SourceGenerator.Tests
 using System;
 using Minimalist.Reactive;
 using Minimalist.Reactive.Linq;
+using Minimalist.Reactive.Concurrency;
 namespace Hello
 {
     public partial class MyCoolClass
@@ -66,7 +69,7 @@ namespace Hello
         [Rxify]
         public IObservable<int> DoSomething()
         {
-            return Observable.Return(1).Where(x => x < 0);
+            return Observable.Return(1, Scheduler.CurrentThread).Where(x => x < 0);
         }
     }
 }

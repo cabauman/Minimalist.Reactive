@@ -1,6 +1,4 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Minimalist.Reactive.SourceGenerator.OperatorData;
-using System.Text;
+﻿using System.Text;
 
 namespace Minimalist.Reactive.SourceGenerator.SourceCreator
 {
@@ -10,15 +8,15 @@ namespace Minimalist.Reactive.SourceGenerator.SourceCreator
         {
             var source = $@"
 using System;
+using System.Collections.Generic;
+using Minimalist.Reactive.Concurrency;
 using Minimalist.Reactive.Linq;
 using Minimalist.Reactive.Disposables;
 namespace {classDatum.NamespaceName}
 {{
     public partial class {classDatum.ClassName}
     {{
-        private bool isUpstreamComplete;
-        private IDisposable subscription;
-        {string.Join("\n\n", classDatum.ClassContents.Select(ProcessEntry))}
+        {string.Join("\n\n", classDatum.ClassContents.Select(x => ProcessClassContent(x, classDatum.ClassName)))}
     }}
 }}
 ";
@@ -26,11 +24,11 @@ namespace {classDatum.NamespaceName}
             return source;
         }
 
-        private string ProcessEntry(ClassContent classContent)
+        private string ProcessClassContent(ClassContent classContent, string className)
         {
             return $@"
 {ProcessObservableProperty(classContent.PropertyDatum)}
-{ProcessObservableClass(classContent.ClassDatum)}
+{ProcessNestedObservableClass(classContent.ClassDatum, className)}
 ";
         }
 
@@ -40,57 +38,91 @@ namespace {classDatum.NamespaceName}
             var returnType = observablePropertyDatum.GenericType.ToDisplayString();
             var propertyName = observablePropertyDatum.Name;
             var methodName = observablePropertyDatum.OriginalMethodName;
-            var propertySource = $"{accessModifier} {returnType} {propertyName} {{ get; }} = new {methodName}Observable();";
+            var propertySource = @$"
+private {returnType} _{propertyName};
+{accessModifier} {returnType} {propertyName}
+{{
+    get
+    {{
+        if (_{propertyName} == null)
+        {{
+            _{propertyName} = new {methodName}Observable(this);
+        }}
+        return _{propertyName};
+    }}
+}}
+";
             return propertySource;
         }
 
-        public string ProcessObservableClass(NestedClassDatum observableClassDatum)
+        public string ProcessNestedObservableClass(NestedClassDatum observableClassDatum, string parentClassName)
         {
             var returnType = observableClassDatum.GenericType;
             var source = $@"
     private class {observableClassDatum.ClassName} : IObservable<{returnType}>
     {{
-        {string.Join("\n\n", observableClassDatum.Methods.Select(x => ProcessMethod(x, observableClassDatum.Methods.Length)))}
+        // Only needed if there are member references.
+        private readonly {parentClassName} _parent = null;
+
+        public {observableClassDatum.ClassName}({parentClassName} parent)
+        {{
+            _parent = parent;
+        }}
+
+        public IDisposable Subscribe(IObserver<{returnType}> observer)
+        {{
+            return new Subscription(observer, _parent);
+            //return Disposable.Empty;
+        }}
+
+        // Only needed if included operator logic stores state.
+        // Not needed for hot observables.
+        public class Subscription : IDisposable
+        {{
+            private readonly {parentClassName} _parent = null;
+            private IObserver<{returnType}> _observer = null;
+            private bool _isUpstreamComplete = false;
+            // TODO: Only needed for hot generator.
+            //private List<IDisposable> _subscriptions = new List<IDisposable>();
+
+            public Subscription(IObserver<{returnType}> observer, {parentClassName} parent)
+            {{
+                _observer = observer;
+                _parent = parent;
+            }}
+
+            public void Run()
+            {{
+            }}
+
+            public void Dispose()
+            {{
+                _isDisposed = true;
+            }}
+
+            {string.Join("\n\n", observableClassDatum.Methods.Select(x => ProcessMethod(x, observableClassDatum.Methods.Length)))}
+        }}
     }}
 ";
-
-            // Maybe rename ClassContents to RxifyRequests.
-            //foreach (var method in observableClassDatum.Methods)
-            //{
-            //    var name = method.Name;
-            //    var operatorData = method.OperatorData;
-            //    var operatorFields = new List<FieldDatum>();
-            //    foreach (var operatorDatum in operatorData)
-            //    {
-            //        OperatorResult result = operatorDatum.Name switch
-            //        {
-            //            "Return" => Return(operatorDatum),
-            //            "Where" => Where(operatorDatum),
-            //            "Select" => Select(operatorDatum),
-            //            _ => throw new NotSupportedException(),
-            //        };
-            //        operatorFields.AddRange(result.Fields);
-            //        var operatorSource = result.Source;
-            //    }
-            //}
 
             return source;
         }
 
         private string ProcessMethod(MethodDatum methodDatum, int methodCount)
         {
-            var returnStatement = "return Disposable.Empty;";
-            if (methodCount > 1)
+            var returnStatement = "";
+            if (methodDatum.Name == "Subscribe")
             {
                 returnStatement = @"
-this.subscription = new BooleanDisposable();
-return this.subscription;
+var subscription = new BooleanDisposable();
+return subscription;
 ";
             }
 
             return $@"
-private {methodDatum.ReturnType} {methodDatum.Name}({methodDatum.ParameterType} {methodDatum.ParameterName})
+{(methodDatum.Name == "Subscribe" ? "public" : "private")} {methodDatum.ReturnType} {methodDatum.Name}({methodDatum.ParameterType} {methodDatum.ParameterName})
 {{
+    {(methodDatum.Name == "Subscribe" && methodCount > 1 ? "_observer = observer;" : "")}
     {ProcessMethodContents(methodDatum)}
     {returnStatement}
 }}
@@ -101,90 +133,27 @@ private {methodDatum.ReturnType} {methodDatum.Name}({methodDatum.ParameterType} 
         {
             var operatorData = methodDatum.OperatorData;
             var sb = new StringBuilder();
-            var isWithinSubscribeMethod = methodDatum.Name == "Subscribe";
-            var isInLoop = false;
-            var localVarCounter = 0;
+            var context = new RxSourceCreatorContext()
+            {
+                LocalVarCounter = 0,
+                IsInLoop = false,
+                IsWithinSubscribeMethod = methodDatum.Name == "Subscribe",
+            };
             foreach (var operatorDatum in operatorData)
             {
-                OperatorResult result = operatorDatum.Name switch
-                {
-                    "Return" => Return(operatorDatum, localVarCounter),
-                    "Where" => Where(operatorDatum, isWithinSubscribeMethod, isInLoop, localVarCounter),
-                    "Select" => Select(operatorDatum, ++localVarCounter),
-                    "OnNext" => ObserverOnNext(localVarCounter),
-                    _ => throw new NotSupportedException(),
-                };
+                OperatorResult result = operatorDatum.GetSource(context);
                 sb.AppendLine(result.Source);
             }
             return sb.ToString();
         }
+    }
 
-        public OperatorResult Return(OperatorDatum operatorData, int localVarCounter)
-        {
-            var value = operatorData.ArgData[0].Expression.ToString();
-            return new OperatorResult
-            {
-                Source = $"var x{localVarCounter} = {value};",
-            };
-        }
+    internal class RxSourceCreatorContext
+    {
+        public bool IsWithinSubscribeMethod {  get; set; }
 
-        public OperatorResult Where(OperatorDatum operatorData, bool isWithinSubscribeMethod, bool isInLoop, int localVarCounter)
-        {
-            var predicate = "";
-            if (operatorData.ArgData[0].Expression is LambdaExpressionSyntax lambda)
-            {
-                predicate = lambda.Body.ToString();
-            }
+        public bool IsInLoop { get; set; }
 
-            var skipOnNextStatement = "return;";
-            if (isWithinSubscribeMethod)
-            {
-                if (isInLoop)
-                {
-                    skipOnNextStatement = "continue;";
-                }
-                else
-                {
-                    skipOnNextStatement = "return Disposable.Empty;";
-                }
-            }
-
-            return new OperatorResult
-            {
-                Source = @$"
-if (!({predicate}))
-{{
-    if (isUpstreamComplete)
-    {{
-        observer.OnCompleted();
-    }}
-    {skipOnNextStatement}
-}}
-",
-            };
-        }
-
-        public OperatorResult Select(OperatorDatum operatorData, int localVarCounter)
-        {
-            var selector = operatorData.ArgData[0].Expression.ToString();
-            return new OperatorResult
-            {
-                Source = $"var x{localVarCounter} = {selector}(x{localVarCounter - 1});",
-            };
-        }
-
-        private OperatorResult ObserverOnNext(int localVarCounter)
-        {
-            return new OperatorResult
-            {
-                Source = $@"
-observer.OnNext(x{localVarCounter});
-if (isUpstreamComplete)
-{{
-    observer.OnCompleted();
-}}
-",
-            };
-        }
+        public int LocalVarCounter { get; set; }
     }
 }

@@ -106,7 +106,7 @@ namespace Minimalist.Reactive
             }
             invocationExpressions.Reverse();
             var operatorFields = new List<FieldDatum>();
-            var operatorData = new List<OperatorDatum>();
+            var operatorData = new List<IOperatorDatum>();
             var operatorMethods = new List<MethodDatum> { new MethodDatum { Name = "Subscribe", ReturnType = "IDisposable", ParameterName = "observer", ParameterType = $"IObserver<{genericObserverType.ToDisplayString()}>", OperatorData = operatorData } };
             int counter = 0;
             foreach (var invocationExpression in invocationExpressions)
@@ -117,26 +117,25 @@ namespace Minimalist.Reactive
                 var parameterData = new List<ArgDatum>();
                 for (int i = 0; i < arguments.Count; i++)
                 {
-                    var parameterDatum = new ArgDatum { Name = parameters[i].Name, Type = parameters[i].Type, Expression = arguments[i].Expression };
+                    var parameterDatum = new ArgDatum { ParameterName = parameters[i].Name, Type = parameters[i].Type, Expression = arguments[i].Expression };
                     parameterData.Add(parameterDatum);
                 }
 
                 var operatorGenericReturnType = operatorMethodSymbol.TypeArguments[0].ToDisplayString();
 
-                var operatorDatum = new OperatorDatum(operatorMethodSymbol.Name, parameterData);
-                var operatorInfo = OperatorInfoMap.GetInfo(operatorMethodSymbol.Name);
-                operatorFields.AddRange(operatorInfo.Fields);
+                var operatorDatum = OperatorInfoMap.GetInfo(operatorMethodSymbol.Name, parameterData);
+                operatorFields.AddRange(operatorDatum.Fields);
                 operatorData.Add(operatorDatum);
-                if (operatorInfo.RequiresScheduling)
+                if (operatorDatum.RequiresScheduling)
                 {
-                    operatorData = new List<OperatorDatum>();
-                    var methodDatum = new MethodDatum { Name = $"Tick{counter++}", ReturnType = "void", ParameterName = "arg", ParameterType = operatorGenericReturnType, OperatorData = operatorData };
+                    operatorData = new List<IOperatorDatum>();
+                    var methodDatum = new MethodDatum { Name = $"Tick{counter++}", ReturnType = "void", ParameterName = "x0", ParameterType = operatorGenericReturnType, OperatorData = operatorData };
                     operatorMethods.Add(methodDatum);
                 }
             }
 
             // Add one operatorDatum that calls observer.OnNext.
-            operatorData.Add(new OperatorDatum("OnNext", Array.Empty<ArgDatum>()));
+            operatorData.Add(new ObserverOnNext());
 
             return new NestedClassDatum
             {
@@ -150,50 +149,16 @@ namespace Minimalist.Reactive
 
     internal static class OperatorInfoMap
     {
-        public static OperatorInfo GetInfo(string operatorName)
+        public static IOperatorDatum GetInfo(string operatorName, List<ArgDatum> argData)
         {
             return operatorName switch
             {
-                "Return" => Return(),
-                "Where" => Where(),
-                "Select" => Select(),
+                "Return" => new Return(argData),
+                "Where" => new Where(argData),
+                "Select" => new Select(argData),
                 _ => throw new NotSupportedException(),
             };
         }
-
-        public static OperatorInfo Return()
-        {
-            return new OperatorInfo
-            {
-                Fields = Array.Empty<FieldDatum>(),
-                RequiresScheduling = false,
-            };
-        }
-
-        public static OperatorInfo Where()
-        {
-            return new OperatorInfo
-            {
-                Fields = Array.Empty<FieldDatum>(),
-                RequiresScheduling = false,
-            };
-        }
-
-        public static OperatorInfo Select()
-        {
-            return new OperatorInfo
-            {
-                Fields = Array.Empty<FieldDatum>(),
-                RequiresScheduling = false,
-            };
-        }
-    }
-
-    internal class OperatorInfo
-    {
-        public bool RequiresScheduling { get; set; }
-
-        public IReadOnlyList<FieldDatum> Fields { get; set; }
     }
 }
 

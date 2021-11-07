@@ -57,12 +57,12 @@ namespace Minimalist.Reactive.SourceGenerator
 
         public string ParameterType { get; set; }
 
-        public List<OperatorDatum> OperatorData { get; set; }
+        public List<IOperatorDatum> OperatorData { get; set; }
     }
 
     internal class ArgDatum
     {
-        public string Name { get; set; }
+        public string ParameterName { get; set; }
 
         public ITypeSymbol Type { get; set; }
 
@@ -71,7 +71,7 @@ namespace Minimalist.Reactive.SourceGenerator
 
     internal class FieldDatum
     {
-        public string Name { get; }
+        public string Name { get; set; }
 
         public ITypeSymbol Type { get; set; }
     }

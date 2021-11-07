@@ -42,7 +42,7 @@ namespace Minimalist.Reactive.Concurrency
         /// <returns>The disposable object used to cancel the scheduled action (best effort).</returns>
         /// <exception cref="ArgumentNullException"><paramref name="scheduler"/> or <paramref name="action"/> is <c>null</c>.</exception>
         // Note: The naming of that method differs because otherwise, the signature would cause ambiguities.
-        internal static IDisposable ScheduleAction<TState>(this IScheduler scheduler, TState state, Action<TState> action)
+        public static IDisposable ScheduleAction<TState>(this IScheduler scheduler, TState state, Action<TState> action)
         {
             if (scheduler == null)
             {
