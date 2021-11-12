@@ -1,4 +1,6 @@
-﻿namespace Minimalist.Reactive.Disposables
+﻿using System;
+
+namespace Minimalist.Reactive.Disposables
 {
     /// <summary>
     /// Provides a set of static methods for creating <see cref="IDisposable"/> objects.

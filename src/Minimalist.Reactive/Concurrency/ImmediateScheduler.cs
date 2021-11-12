@@ -1,4 +1,7 @@
-﻿namespace Minimalist.Reactive.Concurrency
+﻿using System;
+using System.Threading;
+
+namespace Minimalist.Reactive.Concurrency
 {
     public sealed class ImmediateScheduler : IScheduler
     {
@@ -17,8 +20,7 @@
 
         public IDisposable Schedule<TState>(TState state, Func<IScheduler, TState, IDisposable> action)
         {
-            throw new NotImplementedException();
-            //return action(state);
+            return action(this, state);
         }
 
         public IDisposable Schedule<TState>(TState state, TimeSpan dueTime, Func<IScheduler, TState, IDisposable> action)
@@ -29,13 +31,13 @@
                 Thread.Sleep(dt);
             }
 
-            throw new NotImplementedException();
-            //return action(state);
+            return action(this, state);
         }
 
         public IDisposable Schedule<TState>(TState state, DateTimeOffset dueTime, Func<IScheduler, TState, IDisposable> action)
         {
-            throw new NotImplementedException();
+            var due = Scheduler.Normalize(dueTime - Now);
+            return Schedule(state, TimeSpan.Zero, action);
         }
     }
 }

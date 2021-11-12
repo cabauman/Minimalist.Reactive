@@ -1,4 +1,6 @@
-﻿namespace Minimalist.Reactive.Concurrency
+﻿using System;
+
+namespace Minimalist.Reactive.Concurrency
 {
     /// <summary>
     /// Represents an object that schedules units of work.

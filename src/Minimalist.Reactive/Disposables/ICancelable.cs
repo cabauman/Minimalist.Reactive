@@ -1,4 +1,6 @@
-﻿namespace Minimalist.Reactive.Disposables
+﻿using System;
+
+namespace Minimalist.Reactive.Disposables
 {
     /// <summary>
     /// Disposable resource with disposal state tracking.

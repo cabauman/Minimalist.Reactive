@@ -1,4 +1,7 @@
-﻿namespace Minimalist.Reactive.Disposables
+﻿using System;
+using System.Threading;
+
+namespace Minimalist.Reactive.Disposables
 {
     /// <summary>
     /// Represents an Action-based disposable.
