@@ -68,7 +68,7 @@ namespace Minimalist.Reactive
             var classContents = new List<ClassContent>();
             foreach (var method in methods)
             {
-                classContents.Add(ProcessMethod(method, compilation));
+                classContents.Add(ProcessMethod(method, compilation, className));
             }
 
             return new ClassDatum
@@ -79,7 +79,7 @@ namespace Minimalist.Reactive
             };
         }
 
-        private ClassContent ProcessMethod(Data method, Compilation compilation)
+        private ClassContent ProcessMethod(Data method, Compilation compilation, string className)
         {
             var accessModifier = method.Symbol.DeclaredAccessibility.ToFriendlyString();
             var returnType = method.Symbol.ReturnType.ToDisplayString();
@@ -90,11 +90,11 @@ namespace Minimalist.Reactive
             return new ClassContent
             {
                 PropertyDatum = new ObservablePropertyDatum { Name = $"{methodName}Property", OriginalMethodName = methodName, GenericType = method.Symbol.ReturnType, Accessibility = method.Symbol.DeclaredAccessibility },
-                ClassDatum = ProcessObservable(method.Symbol, method.Syntax, compilation, genericReturnType),
+                ClassDatum = ProcessObservable(method.Symbol, method.Syntax, compilation, genericReturnType, className),
             };
         }
 
-        private NestedClassDatum ProcessObservable(IMethodSymbol methodSymbol, MethodDeclarationSyntax methodSyntax, Compilation compilation, ITypeSymbol genericObserverType)
+        private NestedClassDatum ProcessObservable(IMethodSymbol methodSymbol, MethodDeclarationSyntax methodSyntax, Compilation compilation, ITypeSymbol genericObserverType, string className)
         {
             var model = compilation.GetSemanticModel(methodSyntax.SyntaxTree);
             var invocationExpressions = new List<InvocationExpressionSyntax>();
@@ -107,7 +107,7 @@ namespace Minimalist.Reactive
             invocationExpressions.Reverse();
             var operatorFields = new List<FieldDatum>();
             var operatorData = new List<IOperatorDatum>();
-            var operatorMethods = new List<MethodDatum> { new MethodDatum { Name = "Subscribe", ReturnType = "IDisposable", ParameterName = "observer", ParameterType = $"IObserver<{genericObserverType.ToDisplayString()}>", OperatorData = operatorData } };
+            var operatorMethods = new List<MethodDatum> { new MethodDatum { Name = "Run", Accessibility = "public", ReturnType = "void", ParameterData = Array.Empty<ParameterDatum>(), OperatorData = operatorData } };
             int counter = 0;
             foreach (var invocationExpression in invocationExpressions)
             {
@@ -117,7 +117,18 @@ namespace Minimalist.Reactive
                 var parameterData = new List<ArgDatum>();
                 for (int i = 0; i < arguments.Count; i++)
                 {
-                    var parameterDatum = new ArgDatum { ParameterName = parameters[i].Name, Type = parameters[i].Type, Expression = arguments[i].Expression };
+                    var current1 = arguments[i].Expression;
+                    while (current1 is MemberAccessExpressionSyntax memberAccessExpression)
+                    {
+                        current1 = memberAccessExpression.Expression;
+                    }
+                    var isParentMember = false;
+                    var argSymbol = model.GetSymbolInfo(current1).Symbol;
+                    if (argSymbol is not null && argSymbol.ContainingType.Name.Equals(className))
+                    {
+                        isParentMember = true;
+                    }
+                    var parameterDatum = new ArgDatum { ParameterName = parameters[i].Name, Type = parameters[i].Type, Expression = arguments[i].Expression, IsMemberOfTargetClass = isParentMember };
                     parameterData.Add(parameterDatum);
                 }
 
@@ -129,7 +140,7 @@ namespace Minimalist.Reactive
                 if (operatorDatum.RequiresScheduling)
                 {
                     operatorData = new List<IOperatorDatum>();
-                    var methodDatum = new MethodDatum { Name = $"Tick{counter++}", ReturnType = "void", ParameterName = "x0", ParameterType = operatorGenericReturnType, OperatorData = operatorData };
+                    var methodDatum = new MethodDatum { Name = $"Tick{counter++}", Accessibility = "private", ReturnType = "void", ParameterData = new[] { new ParameterDatum { Name = "x0", Type = operatorGenericReturnType } }, OperatorData = operatorData };
                     operatorMethods.Add(methodDatum);
                 }
             }

@@ -63,6 +63,8 @@ private {returnType} _{propertyName};
     {{
         // Only needed if there are member references.
         private readonly {parentClassName} _parent = null;
+        // TODO: Only needed for hot generator.
+        //private List<IDisposable> _subscriptions = new List<IDisposable>();
 
         public {observableClassDatum.ClassName}({parentClassName} parent)
         {{
@@ -71,8 +73,9 @@ private {returnType} _{propertyName};
 
         public IDisposable Subscribe(IObserver<{returnType}> observer)
         {{
-            return new Subscription(observer, _parent);
-            //return Disposable.Empty;
+            var subscription = new Subscription(observer, _parent);
+            subscription.Run();
+            return subscription;
         }}
 
         // Only needed if included operator logic stores state.
@@ -82,8 +85,8 @@ private {returnType} _{propertyName};
             private readonly {parentClassName} _parent = null;
             private IObserver<{returnType}> _observer = null;
             private bool _isUpstreamComplete = false;
-            // TODO: Only needed for hot generator.
-            //private List<IDisposable> _subscriptions = new List<IDisposable>();
+            private bool _isDisposed = false;
+            private List<IDisposable> _disposables = new List<IDisposable>();
 
             public Subscription(IObserver<{returnType}> observer, {parentClassName} parent)
             {{
@@ -91,16 +94,16 @@ private {returnType} _{propertyName};
                 _parent = parent;
             }}
 
-            public void Run()
-            {{
-            }}
-
             public void Dispose()
             {{
                 _isDisposed = true;
+                foreach (var d in _disposables)
+                {{
+                    d.Dispose();
+                }}
             }}
 
-            {string.Join("\n\n", observableClassDatum.Methods.Select(x => ProcessMethod(x, observableClassDatum.Methods.Length)))}
+            {string.Join("\n\n", observableClassDatum.Methods.Select(x => ProcessMethod(x)))}
         }}
     }}
 ";
@@ -108,23 +111,19 @@ private {returnType} _{propertyName};
             return source;
         }
 
-        private string ProcessMethod(MethodDatum methodDatum, int methodCount)
+        private string ProcessMethod(MethodDatum methodDatum)
         {
-            var returnStatement = "";
-            if (methodDatum.Name == "Subscribe")
-            {
-                returnStatement = @"
-var subscription = new BooleanDisposable();
-return subscription;
-";
-            }
-
+            var parameters = string.Join(", ", methodDatum.ParameterData.Select(x => $"{x.Type} {x.Name}"));
             return $@"
-{(methodDatum.Name == "Subscribe" ? "public" : "private")} {methodDatum.ReturnType} {methodDatum.Name}({methodDatum.ParameterType} {methodDatum.ParameterName})
+{methodDatum.Accessibility} {methodDatum.ReturnType} {methodDatum.Name}({parameters})
 {{
-    {(methodDatum.Name == "Subscribe" && methodCount > 1 ? "_observer = observer;" : "")}
+    // Remove this case for Run()
+    if (_isDisposed)
+    {{
+        return;
+    }}
+    
     {ProcessMethodContents(methodDatum)}
-    {returnStatement}
 }}
 ";
         }
@@ -136,6 +135,7 @@ return subscription;
             var context = new RxSourceCreatorContext()
             {
                 LocalVarCounter = 0,
+                // TODO: Determine if we're in a loop.
                 IsInLoop = false,
                 IsWithinSubscribeMethod = methodDatum.Name == "Subscribe",
             };

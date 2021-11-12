@@ -11,9 +11,15 @@ namespace Minimalist.Reactive.SourceGenerator.OperatorData
             ArgData = argData;
             if (argData.Count > 1 && argData[1].Type.Name == "IScheduler")
             {
-                // TODO: this only works for static references. If it's a member of parent,
-                // we need to do _parent.{expression}.
                 _schedulerArgName = argData[1].Expression.ToString();
+                if (argData[1].IsMemberOfTargetClass)
+                {
+                    if (_schedulerArgName.StartsWith("this."))
+                    {
+                        _schedulerArgName = _schedulerArgName.Substring(5);
+                    }
+                    _schedulerArgName = $"_parent.{_schedulerArgName}";
+                }
             }
 
             Fields = Array.Empty<FieldDatum>();
@@ -35,13 +41,18 @@ namespace Minimalist.Reactive.SourceGenerator.OperatorData
             {
                 return new OperatorResult
                 {
-                    // TODO: Consider adding this to a collection of disposables in case of cancellation.
-                    Source = $"{_schedulerArgName}.ScheduleAction(this, static @this => @this.Tick{0}({value}));",
+                    Source = @$"
+_isUpstreamComplete = true;
+_disposables.Add({_schedulerArgName}.ScheduleAction(this, static @this => @this.Tick{0}({value})));
+",
                 };
             }
             return new OperatorResult
             {
-                Source = $"var x{localVarCounter} = {value};",
+                Source = @$"
+_isUpstreamComplete = true;
+var x{localVarCounter} = {value};
+",
             };
         }
     }

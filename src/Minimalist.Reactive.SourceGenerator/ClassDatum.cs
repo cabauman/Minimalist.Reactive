@@ -39,11 +39,16 @@ namespace Minimalist.Reactive.SourceGenerator
     {
         public string Name { get; set; }
 
+        //public string BackingFieldName { get; set; }
+
+        // CustomObservableClassName
         public string OriginalMethodName { get; set; }
 
         // Might have to change this to be the whole type for special cases like IConnectableObservable.
+        // Think about making this a string so we don't leave the "to string" logic up to the source creator.
         public ITypeSymbol GenericType { get; set; } // int for IObservable<int>
 
+        // Think about making this a string so we don't leave the "to string" logic up to the source creator.
         public Accessibility Accessibility { get; set; }
     }
 
@@ -51,13 +56,20 @@ namespace Minimalist.Reactive.SourceGenerator
     {
         public string Name { get; set; }
 
+        public string Accessibility { get; set; }
+
         public string ReturnType { get; set; }
 
-        public string ParameterName { get; set; }
-
-        public string ParameterType { get; set; }
+        public IReadOnlyList<ParameterDatum> ParameterData { get; set; }
 
         public List<IOperatorDatum> OperatorData { get; set; }
+    }
+
+    internal class ParameterDatum
+    {
+        public string Name { get; set; }
+
+        public string Type { get; set; }
     }
 
     internal class ArgDatum
@@ -67,6 +79,8 @@ namespace Minimalist.Reactive.SourceGenerator
         public ITypeSymbol Type { get; set; }
 
         public ExpressionSyntax Expression { get; set; }
+
+        public bool IsMemberOfTargetClass { get; set; }
     }
 
     internal class FieldDatum

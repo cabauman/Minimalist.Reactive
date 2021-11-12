@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Minimalist.Reactive.SourceGenerator
 {
-    [Generator]
+    //[Generator]
     public class RxSourceGenerator : ISourceGenerator
     {
         private const string AttributeText = @"
