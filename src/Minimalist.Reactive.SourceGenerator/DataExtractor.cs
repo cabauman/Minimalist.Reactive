@@ -2,9 +2,6 @@
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Minimalist.Reactive.SourceGenerator.Blueprints;
 using Minimalist.Reactive.SourceGenerator.OperatorData;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Minimalist.Reactive.SourceGenerator;
 

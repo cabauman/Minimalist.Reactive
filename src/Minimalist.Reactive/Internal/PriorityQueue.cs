@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Minimalist.Reactive;
+﻿namespace Minimalist.Reactive;
 
 internal sealed class PriorityQueue<T> where T : IComparable<T>
 {

@@ -1,6 +1,4 @@
 ﻿using Minimalist.Reactive.Disposables;
-using System;
-using System.Collections.Generic;
 
 namespace Minimalist.Reactive.Concurrency;
 

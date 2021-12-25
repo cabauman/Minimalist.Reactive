@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Minimalist.Reactive.Concurrency;
+﻿namespace Minimalist.Reactive.Concurrency;
 
 public static partial class Scheduler
 {

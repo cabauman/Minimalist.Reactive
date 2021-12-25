@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading;
-
-namespace Minimalist.Reactive.Concurrency;
+﻿namespace Minimalist.Reactive.Concurrency;
 
 public sealed class ImmediateScheduler : IScheduler
 {

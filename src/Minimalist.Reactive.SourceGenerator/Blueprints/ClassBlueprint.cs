@@ -1,7 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Minimalist.Reactive.SourceGenerator.OperatorData;
-using System.Linq;
 
 namespace Minimalist.Reactive.SourceGenerator.Blueprints;
 
