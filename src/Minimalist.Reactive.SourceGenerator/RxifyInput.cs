@@ -1,12 +1,11 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace Minimalist.Reactive.SourceGenerator
-{
-    internal class RxifyInput
-    {
-        public IMethodSymbol Symbol { get; set; }
+namespace Minimalist.Reactive.SourceGenerator;
 
-        public MethodDeclarationSyntax Syntax { get; set; }
-    }
+internal class RxifyInput
+{
+    public IMethodSymbol Symbol { get; set; }
+
+    public MethodDeclarationSyntax Syntax { get; set; }
 }

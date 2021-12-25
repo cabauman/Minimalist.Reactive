@@ -1,13 +1,12 @@
-﻿namespace Minimalist.Reactive.SourceGenerator.SourceCreator
+﻿namespace Minimalist.Reactive.SourceGenerator.SourceCreator;
+
+internal class RxSourceCreatorContext
 {
-    internal class RxSourceCreatorContext
-    {
-        public bool IsWithinSubscribeMethod {  get; set; }
+    public bool IsWithinSubscribeMethod { get; set; }
 
-        public bool IsInLoop { get; set; }
+    public bool IsInLoop { get; set; }
 
-        public int LocalVarCounter { get; set; }
+    public int LocalVarCounter { get; set; }
 
-        public string IsUpstreamCompleteFieldName { get; set; }
-    }
+    public string IsUpstreamCompleteFieldName { get; set; }
 }

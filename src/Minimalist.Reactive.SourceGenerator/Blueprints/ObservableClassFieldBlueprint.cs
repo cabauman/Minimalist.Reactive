@@ -1,12 +1,11 @@
 ﻿using Microsoft.CodeAnalysis;
 
-namespace Minimalist.Reactive.SourceGenerator.Blueprints
-{
-    // ClassField
-    internal class ObservableClassFieldBlueprint
-    {
-        public string Name { get; set; }
+namespace Minimalist.Reactive.SourceGenerator.Blueprints;
 
-        public ITypeSymbol Type { get; set; }
-    }
+// ClassField
+internal class ObservableClassFieldBlueprint
+{
+    public string Name { get; set; }
+
+    public ITypeSymbol Type { get; set; }
 }

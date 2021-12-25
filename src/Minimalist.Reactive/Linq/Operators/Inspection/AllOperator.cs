@@ -1,63 +1,62 @@
-﻿namespace Minimalist.Reactive.Linq
+﻿namespace Minimalist.Reactive.Linq;
+
+internal sealed class AllOperator<T> : IObservable<bool>
 {
-    internal sealed class AllOperator<T> : IObservable<bool>
+    private readonly IObservable<T> _source;
+    private readonly Func<T, bool> _predicate;
+
+    public AllOperator(IObservable<T> source, Func<T, bool> predicate)
     {
-        private readonly IObservable<T> _source;
+        _source = source;
+        _predicate = predicate;
+    }
+
+    public IDisposable Subscribe(IObserver<bool> observer)
+    {
+        var x = new All(observer, _predicate);
+        return _source.Subscribe(x);
+    }
+
+    internal sealed class All : IObserver<T>
+    {
+        private readonly IObserver<bool> _observer;
         private readonly Func<T, bool> _predicate;
 
-        public AllOperator(IObservable<T> source, Func<T, bool> predicate)
+        public All(IObserver<bool> observer, Func<T, bool> predicate)
         {
-            _source = source;
+            _observer = observer;
             _predicate = predicate;
         }
 
-        public IDisposable Subscribe(IObserver<bool> observer)
+        public void OnNext(T value)
         {
-            var x = new All(observer, _predicate);
-            return _source.Subscribe(x);
-        }
-
-        internal sealed class All : IObserver<T>
-        {
-            private readonly IObserver<bool> _observer;
-            private readonly Func<T, bool> _predicate;
-
-            public All(IObserver<bool> observer, Func<T, bool> predicate)
+            bool result;
+            try
             {
-                _observer = observer;
-                _predicate = predicate;
+                result = _predicate(value);
+            }
+            catch (Exception ex)
+            {
+                _observer.OnError(ex);
+                return;
             }
 
-            public void OnNext(T value)
+            if (!result)
             {
-                bool result;
-                try
-                {
-                    result = _predicate(value);
-                }
-                catch (Exception ex)
-                {
-                    _observer.OnError(ex);
-                    return;
-                }
-
-                if (!result)
-                {
-                    _observer.OnNext(false);
-                    _observer.OnCompleted();
-                }
-            }
-
-            public void OnCompleted()
-            {
-                _observer.OnNext(true);
+                _observer.OnNext(false);
                 _observer.OnCompleted();
             }
+        }
 
-            public void OnError(Exception error)
-            {
-                _observer.OnError(error);
-            }
+        public void OnCompleted()
+        {
+            _observer.OnNext(true);
+            _observer.OnCompleted();
+        }
+
+        public void OnError(Exception error)
+        {
+            _observer.OnError(error);
         }
     }
 }

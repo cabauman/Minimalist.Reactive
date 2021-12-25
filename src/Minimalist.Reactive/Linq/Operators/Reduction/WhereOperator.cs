@@ -1,67 +1,66 @@
-﻿namespace Minimalist.Reactive.Linq
-{
-    internal sealed class WhereOperator<T> : IObservable<T>
-    {
-        private readonly IObservable<T> _source;
-        private readonly Func<T, bool> _predicate;
+﻿namespace Minimalist.Reactive.Linq;
 
-        public WhereOperator(IObservable<T> source, Func<T, bool> predicate)
+internal sealed class WhereOperator<T> : IObservable<T>
+{
+    private readonly IObservable<T> _source;
+    private readonly Func<T, bool> _predicate;
+
+    public WhereOperator(IObservable<T> source, Func<T, bool> predicate)
+    {
+        _source = source;
+        _predicate = predicate;
+    }
+
+    public IDisposable Subscribe(IObserver<T> observer)
+    {
+        var x = new Where(observer, _predicate);
+        var subscription = _source.Subscribe(x);
+        x.SetSubscription(subscription);
+        return subscription;
+    }
+
+    internal sealed class Where : IObserver<T>, IDisposable
+    {
+        private IObserver<T> _observer;
+        private readonly Func<T, bool> _predicate;
+        private IDisposable? _subscription;
+
+        public Where(IObserver<T> observer, Func<T, bool> predicate)
         {
-            _source = source;
+            _observer = observer;
             _predicate = predicate;
         }
 
-        public IDisposable Subscribe(IObserver<T> observer)
+        public void OnNext(T value)
         {
-            var x = new Where(observer, _predicate);
-            var subscription = _source.Subscribe(x);
-            x.SetSubscription(subscription);
-            return subscription;
+            if (_predicate(value))
+            {
+                _observer.OnNext(value);
+            }
         }
 
-        internal sealed class Where : IObserver<T>, IDisposable
+        public void OnCompleted()
         {
-            private IObserver<T> _observer;
-            private readonly Func<T, bool> _predicate;
-            private IDisposable? _subscription;
+            _observer.OnCompleted();
+            Dispose();
+        }
 
-            public Where(IObserver<T> observer, Func<T, bool> predicate)
-            {
-                _observer = observer;
-                _predicate = predicate;
-            }
+        public void OnError(Exception error)
+        {
+            _observer.OnError(error);
+            Dispose();
+        }
 
-            public void OnNext(T value)
-            {
-                if (_predicate(value))
-                {
-                    _observer.OnNext(value);
-                }
-            }
+        public void SetSubscription(IDisposable subscription)
+        {
+            _subscription = subscription;
+        }
 
-            public void OnCompleted()
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref _observer, NopObserver<T>.Instance) != NopObserver<T>.Instance)
             {
-                _observer.OnCompleted();
-                Dispose();
-            }
-
-            public void OnError(Exception error)
-            {
-                _observer.OnError(error);
-                Dispose();
-            }
-
-            public void SetSubscription(IDisposable subscription)
-            {
-                _subscription = subscription;
-            }
-
-            public void Dispose()
-            {
-                if (Interlocked.Exchange(ref _observer, NopObserver<T>.Instance) != NopObserver<T>.Instance)
-                {
-                    _subscription?.Dispose();
-                }
+                _subscription?.Dispose();
             }
         }
     }

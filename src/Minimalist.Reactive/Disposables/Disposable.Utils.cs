@@ -2,138 +2,137 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
-namespace Minimalist.Reactive.Disposables
+namespace Minimalist.Reactive.Disposables;
+
+internal enum TrySetSingleResult
 {
-    internal enum TrySetSingleResult
+    Success,
+    AlreadyAssigned,
+    Disposed
+}
+
+public static partial class Disposable
+{
+    /// <summary>
+    /// Gets the value stored in <paramref name="fieldRef" /> or a null if
+    /// <paramref name="fieldRef" /> was already disposed.
+    /// </summary>
+    internal static IDisposable? GetValue([NotNullIfNotNull("fieldRef")] /*in*/ ref IDisposable? fieldRef)
     {
-        Success,
-        AlreadyAssigned,
-        Disposed
+        var current = Volatile.Read(ref fieldRef);
+
+        return current == BooleanDisposable.True
+            ? null
+            : current;
     }
 
-    public static partial class Disposable
+    /// <summary>
+    /// Gets the value stored in <paramref name="fieldRef" /> or a no-op-Disposable if
+    /// <paramref name="fieldRef" /> was already disposed.
+    /// </summary>
+    [return: NotNullIfNotNull("fieldRef")]
+    internal static IDisposable? GetValueOrDefault([NotNullIfNotNull("fieldRef")] /*in*/ ref IDisposable? fieldRef)
     {
-        /// <summary>
-        /// Gets the value stored in <paramref name="fieldRef" /> or a null if
-        /// <paramref name="fieldRef" /> was already disposed.
-        /// </summary>
-        internal static IDisposable? GetValue([NotNullIfNotNull("fieldRef")] /*in*/ ref IDisposable? fieldRef)
-        {
-            var current = Volatile.Read(ref fieldRef);
+        var current = Volatile.Read(ref fieldRef);
 
-            return current == BooleanDisposable.True
-                ? null
-                : current;
+        return current == BooleanDisposable.True
+            ? EmptyDisposable.Instance
+            : current;
+    }
+
+    /// <summary>
+    /// Tries to assign <paramref name="value" /> to <paramref name="fieldRef" />.
+    /// </summary>
+    /// <returns>A <see cref="TrySetSingleResult"/> value indicating the outcome of the operation.</returns>
+    internal static TrySetSingleResult TrySetSingle([NotNullIfNotNull("value")] ref IDisposable? fieldRef, IDisposable? value)
+    {
+        var old = Interlocked.CompareExchange(ref fieldRef, value, null);
+        if (old == null)
+        {
+            return TrySetSingleResult.Success;
         }
 
-        /// <summary>
-        /// Gets the value stored in <paramref name="fieldRef" /> or a no-op-Disposable if
-        /// <paramref name="fieldRef" /> was already disposed.
-        /// </summary>
-        [return: NotNullIfNotNull("fieldRef")]
-        internal static IDisposable? GetValueOrDefault([NotNullIfNotNull("fieldRef")] /*in*/ ref IDisposable? fieldRef)
+        if (old != BooleanDisposable.True)
         {
-            var current = Volatile.Read(ref fieldRef);
-
-            return current == BooleanDisposable.True
-                ? EmptyDisposable.Instance
-                : current;
+            return TrySetSingleResult.AlreadyAssigned;
         }
 
-        /// <summary>
-        /// Tries to assign <paramref name="value" /> to <paramref name="fieldRef" />.
-        /// </summary>
-        /// <returns>A <see cref="TrySetSingleResult"/> value indicating the outcome of the operation.</returns>
-        internal static TrySetSingleResult TrySetSingle([NotNullIfNotNull("value")] ref IDisposable? fieldRef, IDisposable? value)
+        value?.Dispose();
+        return TrySetSingleResult.Disposed;
+    }
+
+    /// <summary>
+    /// Tries to assign <paramref name="value" /> to <paramref name="fieldRef" />. If <paramref name="fieldRef" />
+    /// is not disposed and is assigned a different value, it will not be disposed.
+    /// </summary>
+    /// <returns>true if <paramref name="value" /> was successfully assigned to <paramref name="fieldRef" />.</returns>
+    /// <returns>false <paramref name="fieldRef" /> has been disposed.</returns>
+    internal static bool TrySetMultiple([NotNullIfNotNull("value")] ref IDisposable? fieldRef, IDisposable? value)
+    {
+        // Let's read the current value atomically (also prevents reordering).
+        var old = Volatile.Read(ref fieldRef);
+
+        for (; ; )
         {
-            var old = Interlocked.CompareExchange(ref fieldRef, value, null);
-            if (old == null)
+            // If it is the disposed instance, dispose the value.
+            if (old == BooleanDisposable.True)
             {
-                return TrySetSingleResult.Success;
+                value?.Dispose();
+                return false;
             }
 
-            if (old != BooleanDisposable.True)
+            // Atomically swap in the new value and get back the old.
+            var b = Interlocked.CompareExchange(ref fieldRef, value, old);
+
+            // If the old and new are the same, the swap was successful and we can quit
+            if (old == b)
             {
-                return TrySetSingleResult.AlreadyAssigned;
+                return true;
             }
 
-            value?.Dispose();
-            return TrySetSingleResult.Disposed;
+            // Otherwise, make the old reference the current and retry.
+            old = b;
         }
+    }
 
-        /// <summary>
-        /// Tries to assign <paramref name="value" /> to <paramref name="fieldRef" />. If <paramref name="fieldRef" />
-        /// is not disposed and is assigned a different value, it will not be disposed.
-        /// </summary>
-        /// <returns>true if <paramref name="value" /> was successfully assigned to <paramref name="fieldRef" />.</returns>
-        /// <returns>false <paramref name="fieldRef" /> has been disposed.</returns>
-        internal static bool TrySetMultiple([NotNullIfNotNull("value")] ref IDisposable? fieldRef, IDisposable? value)
+    /// <summary>
+    /// Tries to assign <paramref name="value" /> to <paramref name="fieldRef" />. If <paramref name="fieldRef" />
+    /// is not disposed and is assigned a different value, it will be disposed.
+    /// </summary>
+    /// <returns>true if <paramref name="value" /> was successfully assigned to <paramref name="fieldRef" />.</returns>
+    /// <returns>false <paramref name="fieldRef" /> has been disposed.</returns>
+    internal static bool TrySetSerial([NotNullIfNotNull("value")] ref IDisposable? fieldRef, IDisposable? value)
+    {
+        var copy = Volatile.Read(ref fieldRef);
+        for (; ; )
         {
-            // Let's read the current value atomically (also prevents reordering).
-            var old = Volatile.Read(ref fieldRef);
-
-            for (; ; )
+            if (copy == BooleanDisposable.True)
             {
-                // If it is the disposed instance, dispose the value.
-                if (old == BooleanDisposable.True)
-                {
-                    value?.Dispose();
-                    return false;
-                }
-
-                // Atomically swap in the new value and get back the old.
-                var b = Interlocked.CompareExchange(ref fieldRef, value, old);
-
-                // If the old and new are the same, the swap was successful and we can quit
-                if (old == b)
-                {
-                    return true;
-                }
-
-                // Otherwise, make the old reference the current and retry.
-                old = b;
+                value?.Dispose();
+                return false;
             }
+
+            var current = Interlocked.CompareExchange(ref fieldRef, value, copy);
+            if (current == copy)
+            {
+                copy?.Dispose();
+                return true;
+            }
+
+            copy = current;
         }
+    }
 
-        /// <summary>
-        /// Tries to assign <paramref name="value" /> to <paramref name="fieldRef" />. If <paramref name="fieldRef" />
-        /// is not disposed and is assigned a different value, it will be disposed.
-        /// </summary>
-        /// <returns>true if <paramref name="value" /> was successfully assigned to <paramref name="fieldRef" />.</returns>
-        /// <returns>false <paramref name="fieldRef" /> has been disposed.</returns>
-        internal static bool TrySetSerial([NotNullIfNotNull("value")] ref IDisposable? fieldRef, IDisposable? value)
+    /// <summary>
+    /// Disposes <paramref name="fieldRef" />. 
+    /// </summary>
+    internal static void Dispose([NotNullIfNotNull("fieldRef")] ref IDisposable? fieldRef)
+    {
+        var old = Interlocked.Exchange(ref fieldRef, BooleanDisposable.True);
+
+        if (old != BooleanDisposable.True)
         {
-            var copy = Volatile.Read(ref fieldRef);
-            for (; ; )
-            {
-                if (copy == BooleanDisposable.True)
-                {
-                    value?.Dispose();
-                    return false;
-                }
-
-                var current = Interlocked.CompareExchange(ref fieldRef, value, copy);
-                if (current == copy)
-                {
-                    copy?.Dispose();
-                    return true;
-                }
-
-                copy = current;
-            }
-        }
-
-        /// <summary>
-        /// Disposes <paramref name="fieldRef" />. 
-        /// </summary>
-        internal static void Dispose([NotNullIfNotNull("fieldRef")] ref IDisposable? fieldRef)
-        {
-            var old = Interlocked.Exchange(ref fieldRef, BooleanDisposable.True);
-
-            if (old != BooleanDisposable.True)
-            {
-                old?.Dispose();
-            }
+            old?.Dispose();
         }
     }
 }

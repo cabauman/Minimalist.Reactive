@@ -1,10 +1,9 @@
-﻿namespace Minimalist.Reactive.SourceGenerator.Blueprints
-{
-    // MethodParameterBlueprint
-    internal class ObservableClassMethodParameterBlueprint
-    {
-        public string Name { get; set; }
+﻿namespace Minimalist.Reactive.SourceGenerator.Blueprints;
 
-        public string Type { get; set; }
-    }
+// MethodParameterBlueprint
+internal class ObservableClassMethodParameterBlueprint
+{
+    public string Name { get; set; }
+
+    public string Type { get; set; }
 }

@@ -1,45 +1,44 @@
-﻿namespace Minimalist.Reactive.Linq
+﻿namespace Minimalist.Reactive.Linq;
+
+internal sealed class MaterializeOperator<TSource> : IObservable<Notification<TSource>>
 {
-    internal sealed class MaterializeOperator<TSource> : IObservable<Notification<TSource>>
+    private readonly IObservable<TSource> _source;
+
+    public MaterializeOperator(IObservable<TSource> source)
     {
-        private readonly IObservable<TSource> _source;
+        _source = source;
+    }
 
-        public MaterializeOperator(IObservable<TSource> source)
+    public IDisposable Subscribe(IObserver<Notification<TSource>> observer)
+    {
+        var x = new Materialize(observer);
+        return _source.Subscribe(x);
+    }
+
+    internal sealed class Materialize : IObserver<TSource>
+    {
+        private readonly IObserver<Notification<TSource>> _observer;
+
+        public Materialize(IObserver<Notification<TSource>> observer)
         {
-            _source = source;
+            _observer = observer;
         }
 
-        public IDisposable Subscribe(IObserver<Notification<TSource>> observer)
+        public void OnNext(TSource value)
         {
-            var x = new Materialize(observer);
-            return _source.Subscribe(x);
+            _observer.OnNext(Notification.CreateOnNext(value));
         }
 
-        internal sealed class Materialize : IObserver<TSource>
+        public void OnError(Exception error)
         {
-            private readonly IObserver<Notification<TSource>> _observer;
+            _observer.OnNext(Notification.CreateOnError<TSource>(error));
+            OnCompleted();
+        }
 
-            public Materialize(IObserver<Notification<TSource>> observer)
-            {
-                _observer = observer;
-            }
-
-            public void OnNext(TSource value)
-            {
-                _observer.OnNext(Notification.CreateOnNext(value));
-            }
-
-            public void OnError(Exception error)
-            {
-                _observer.OnNext(Notification.CreateOnError<TSource>(error));
-                OnCompleted();
-            }
-
-            public void OnCompleted()
-            {
-                _observer.OnNext(Notification.CreateOnCompleted<TSource>());
-                _observer.OnCompleted();
-            }
+        public void OnCompleted()
+        {
+            _observer.OnNext(Notification.CreateOnCompleted<TSource>());
+            _observer.OnCompleted();
         }
     }
 }

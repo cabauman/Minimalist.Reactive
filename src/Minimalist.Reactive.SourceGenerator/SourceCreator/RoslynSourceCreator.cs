@@ -1,15 +1,14 @@
 ﻿using Minimalist.Reactive.SourceGenerator.Blueprints;
 
-namespace Minimalist.Reactive.SourceGenerator.SourceCreator
+namespace Minimalist.Reactive.SourceGenerator.SourceCreator;
+
+internal class RoslynSourceCreator : ISourceCreator
 {
-    internal class RoslynSourceCreator : ISourceCreator
+    public string Create(TargetClassBlueprint classDatum)
     {
-        public string Create(TargetClassBlueprint classDatum)
+        foreach (var property in classDatum.Properties)
         {
-            foreach (var property in classDatum.Properties)
-            {
-            }
-            return string.Empty;
         }
+        return string.Empty;
     }
 }

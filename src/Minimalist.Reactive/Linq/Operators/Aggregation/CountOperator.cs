@@ -1,115 +1,114 @@
-﻿namespace Minimalist.Reactive.Linq
+﻿namespace Minimalist.Reactive.Linq;
+
+internal sealed class CountOperator<T> : IObservable<int>
 {
-    internal sealed class CountOperator<T> : IObservable<int>
+    private readonly IObservable<T> _source;
+
+    public CountOperator(IObservable<T> source)
     {
-        private readonly IObservable<T> _source;
+        _source = source;
+    }
 
-        public CountOperator(IObservable<T> source)
+    public IDisposable Subscribe(IObserver<int> observer)
+    {
+        var x = new Count(observer);
+        return _source.Subscribe(x);
+    }
+
+    internal sealed class Count : IObserver<T>
+    {
+        private readonly IObserver<int> _observer;
+        private int _count;
+
+        public Count(IObserver<int> observer)
         {
-            _source = source;
+            _observer = observer;
         }
 
-        public IDisposable Subscribe(IObserver<int> observer)
+        public void OnNext(T value)
         {
-            var x = new Count(observer);
-            return _source.Subscribe(x);
-        }
-
-        internal sealed class Count : IObserver<T>
-        {
-            private readonly IObserver<int> _observer;
-            private int _count;
-
-            public Count(IObserver<int> observer)
+            try
             {
-                _observer = observer;
+                checked
+                {
+                    _count += 1;
+                }
             }
-
-            public void OnNext(T value)
+            catch (Exception ex)
             {
-                try
+                _observer.OnError(ex);
+            }
+        }
+
+        public void OnCompleted()
+        {
+            _observer.OnNext(_count);
+            _observer.OnCompleted();
+        }
+
+        public void OnError(Exception error)
+        {
+            _observer.OnError(error);
+        }
+    }
+}
+
+internal sealed class PredicateCountOperator<T> : IObservable<int>
+{
+    private readonly IObservable<T> _source;
+    private readonly Func<T, bool> _predicate;
+
+    public PredicateCountOperator(IObservable<T> source, Func<T, bool> predicate)
+    {
+        _source = source;
+        _predicate = predicate;
+    }
+
+    public IDisposable Subscribe(IObserver<int> observer)
+    {
+        var x = new Count(observer, _predicate);
+        return _source.Subscribe(x);
+    }
+
+    internal sealed class Count : IObserver<T>
+    {
+        private readonly IObserver<int> _observer;
+        private readonly Func<T, bool> _predicate;
+        private int _count;
+
+        public Count(IObserver<int> observer, Func<T, bool> predicate)
+        {
+            _observer = observer;
+            _predicate = predicate;
+        }
+
+        public void OnNext(T value)
+        {
+            try
+            {
+                if (_predicate(value))
                 {
                     checked
                     {
                         _count += 1;
                     }
                 }
-                catch (Exception ex)
-                {
-                    _observer.OnError(ex);
-                }
             }
-
-            public void OnCompleted()
+            catch (Exception ex)
             {
-                _observer.OnNext(_count);
-                _observer.OnCompleted();
-            }
-
-            public void OnError(Exception error)
-            {
-                _observer.OnError(error);
+                _observer.OnError(ex);
             }
         }
-    }
 
-    internal sealed class PredicateCountOperator<T> : IObservable<int>
-    {
-        private readonly IObservable<T> _source;
-        private readonly Func<T, bool> _predicate;
-
-        public PredicateCountOperator(IObservable<T> source, Func<T, bool> predicate)
+        public void OnCompleted()
         {
-            _source = source;
-            _predicate = predicate;
+            _observer.OnNext(_count);
+            _observer.OnCompleted();
         }
 
-        public IDisposable Subscribe(IObserver<int> observer)
+        public void OnError(Exception error)
         {
-            var x = new Count(observer, _predicate);
-            return _source.Subscribe(x);
-        }
-
-        internal sealed class Count : IObserver<T>
-        {
-            private readonly IObserver<int> _observer;
-            private readonly Func<T, bool> _predicate;
-            private int _count;
-
-            public Count(IObserver<int> observer, Func<T, bool> predicate)
-            {
-                _observer = observer;
-                _predicate = predicate;
-            }
-
-            public void OnNext(T value)
-            {
-                try
-                {
-                    if (_predicate(value))
-                    {
-                        checked
-                        {
-                            _count += 1;
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _observer.OnError(ex);
-                }
-            }
-
-            public void OnCompleted()
-            {
-                _observer.OnNext(_count);
-                _observer.OnCompleted();
-            }
-
-            public void OnError(Exception error)
-            {
-                _observer.OnError(error);
-            }
+            _observer.OnError(error);
         }
     }
 }

@@ -1,19 +1,18 @@
 ﻿using Minimalist.Reactive.SourceGenerator.Blueprints;
 using Minimalist.Reactive.SourceGenerator.OperatorData;
 
-namespace Minimalist.Reactive.SourceGenerator
+namespace Minimalist.Reactive.SourceGenerator;
+
+internal static class OperatorLogicFactory
 {
-    internal static class OperatorLogicFactory
+    public static IOperatorLogic Create(string operatorName, string genericTypeArgument, List<OperatorArgument> arguments)
     {
-        public static IOperatorLogic Create(string operatorName, string genericTypeArgument, List<OperatorArgument> arguments)
+        return operatorName switch
         {
-            return operatorName switch
-            {
-                "Return" => new Return(genericTypeArgument, arguments),
-                "Where" => new Where(arguments),
-                "Select" => new Select(arguments),
-                _ => throw new NotSupportedException(),
-            };
-        }
+            "Return" => new Return(genericTypeArgument, arguments),
+            "Where" => new Where(arguments),
+            "Select" => new Select(arguments),
+            _ => throw new NotSupportedException(),
+        };
     }
 }

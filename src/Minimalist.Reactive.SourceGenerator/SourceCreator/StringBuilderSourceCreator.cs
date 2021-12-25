@@ -1,13 +1,13 @@
 ﻿using Minimalist.Reactive.SourceGenerator.Blueprints;
 using System.Text;
 
-namespace Minimalist.Reactive.SourceGenerator.SourceCreator
+namespace Minimalist.Reactive.SourceGenerator.SourceCreator;
+
+internal class StringBuilderSourceCreator : ISourceCreator
 {
-    internal class StringBuilderSourceCreator : ISourceCreator
+    public string Create(TargetClassBlueprint classDatum)
     {
-        public string Create(TargetClassBlueprint classDatum)
-        {
-            var source = $@"
+        var source = $@"
 using System;
 using System.Collections.Generic;
 using Minimalist.Reactive.Concurrency;
@@ -22,24 +22,24 @@ namespace {classDatum.NamespaceName}
 }}
 ";
 
-            return source;
-        }
+        return source;
+    }
 
-        private string ProcessClassContent(TargetClassComponentBlueprint classContent, string className)
-        {
-            return $@"
+    private string ProcessClassContent(TargetClassComponentBlueprint classContent, string className)
+    {
+        return $@"
 {ProcessObservableProperty(classContent.PropertyDatum)}
 {ProcessCustomObservableClass(classContent.ClassDatum, className)}
 ";
-        }
+    }
 
-        private string ProcessObservableProperty(TargetClassPropertyBlueprint observablePropertyDatum)
-        {
-            var accessModifier = observablePropertyDatum.Accessibility.ToFriendlyString();
-            var returnType = observablePropertyDatum.ReturnType.ToDisplayString();
-            var propertyName = observablePropertyDatum.Name;
-            var methodName = observablePropertyDatum.OriginalMethodName;
-            var propertySource = @$"
+    private string ProcessObservableProperty(TargetClassPropertyBlueprint observablePropertyDatum)
+    {
+        var accessModifier = observablePropertyDatum.Accessibility.ToFriendlyString();
+        var returnType = observablePropertyDatum.ReturnType.ToDisplayString();
+        var propertyName = observablePropertyDatum.Name;
+        var methodName = observablePropertyDatum.OriginalMethodName;
+        var propertySource = @$"
 private {returnType} _{propertyName};
 {accessModifier} {returnType} {propertyName}
 {{
@@ -53,13 +53,13 @@ private {returnType} _{propertyName};
     }}
 }}
 ";
-            return propertySource;
-        }
+        return propertySource;
+    }
 
-        private string ProcessCustomObservableClass(ObservableClassBlueprint customObservableClass, string parentClassName)
-        {
-            var genericType = customObservableClass.GenericTypeArgument;
-            var source = $@"
+    private string ProcessCustomObservableClass(ObservableClassBlueprint customObservableClass, string parentClassName)
+    {
+        var genericType = customObservableClass.GenericTypeArgument;
+        var source = $@"
     private class {customObservableClass.ClassName} : IObservable<{genericType}>
     {{
         // Only needed if there are member references.
@@ -109,13 +109,13 @@ private {returnType} _{propertyName};
     }}
 ";
 
-            return source;
-        }
+        return source;
+    }
 
-        private string ProcessMethod(ObservableClassMethodBlueprint methodDatum)
-        {
-            var parameters = string.Join(", ", methodDatum.Parameters.Select(x => $"{x.Type} {x.Name}"));
-            return $@"
+    private string ProcessMethod(ObservableClassMethodBlueprint methodDatum)
+    {
+        var parameters = string.Join(", ", methodDatum.Parameters.Select(x => $"{x.Type} {x.Name}"));
+        return $@"
 {methodDatum.Accessibility} {methodDatum.ReturnType} {methodDatum.Name}({parameters})
 {{
     // Remove this case for Run()
@@ -127,26 +127,25 @@ private {returnType} _{propertyName};
     {ProcessMethodContents(methodDatum)}
 }}
 ";
-        }
+    }
 
-        private string ProcessMethodContents(ObservableClassMethodBlueprint methodDatum)
+    private string ProcessMethodContents(ObservableClassMethodBlueprint methodDatum)
+    {
+        var operatorData = methodDatum.OperatorLogicItems;
+        var sb = new StringBuilder();
+        var context = new RxSourceCreatorContext
         {
-            var operatorData = methodDatum.OperatorLogicItems;
-            var sb = new StringBuilder();
-            var context = new RxSourceCreatorContext
-            {
-                LocalVarCounter = 0,
-                // TODO: Determine if we're in a loop.
-                IsInLoop = false,
-                IsWithinSubscribeMethod = methodDatum.Name == "Subscribe",
-                IsUpstreamCompleteFieldName = "_isUpstreamComplete",
-            };
-            foreach (var operatorDatum in operatorData)
-            {
-                OperatorResult result = operatorDatum.GetSource(context);
-                sb.AppendLine(result.Source);
-            }
-            return sb.ToString();
+            LocalVarCounter = 0,
+            // TODO: Determine if we're in a loop.
+            IsInLoop = false,
+            IsWithinSubscribeMethod = methodDatum.Name == "Subscribe",
+            IsUpstreamCompleteFieldName = "_isUpstreamComplete",
+        };
+        foreach (var operatorDatum in operatorData)
+        {
+            OperatorResult result = operatorDatum.GetSource(context);
+            sb.AppendLine(result.Source);
         }
+        return sb.ToString();
     }
 }

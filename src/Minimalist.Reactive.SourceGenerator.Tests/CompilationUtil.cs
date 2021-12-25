@@ -8,32 +8,32 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Minimalist.Reactive.Linq;
 
-namespace Minimalist.Reactive.SourceGenerator.Tests
+namespace Minimalist.Reactive.SourceGenerator.Tests;
+
+/// <summary>
+/// Utility methods to assist with compilations.
+/// </summary>
+public static class CompilationUtil
 {
     /// <summary>
-    /// Utility methods to assist with compilations.
+    /// Creates a compilation.
     /// </summary>
-    public static class CompilationUtil
+    /// <param name="sources">The source code to include.</param>
+    /// <returns>The created compilation.</returns>
+    public static Compilation CreateCompilation(params string[] sources)
     {
-        /// <summary>
-        /// Creates a compilation.
-        /// </summary>
-        /// <param name="sources">The source code to include.</param>
-        /// <returns>The created compilation.</returns>
-        public static Compilation CreateCompilation(params string[] sources)
+        var assemblyPath = Path.GetDirectoryName(typeof(object).Assembly.Location);
+
+        if (assemblyPath == null || string.IsNullOrWhiteSpace(assemblyPath))
         {
-            var assemblyPath = Path.GetDirectoryName(typeof(object).Assembly.Location);
+            throw new InvalidOperationException("Could not find a valid assembly path.");
+        }
 
-            if (assemblyPath == null || string.IsNullOrWhiteSpace(assemblyPath))
+        return CSharpCompilation.Create(
+            assemblyName: "compilation" + Guid.NewGuid(),
+            syntaxTrees: sources.Select(x => CSharpSyntaxTree.ParseText(x, new CSharpParseOptions(LanguageVersion.Latest))),
+            references: new[]
             {
-                throw new InvalidOperationException("Could not find a valid assembly path.");
-            }
-
-            return CSharpCompilation.Create(
-                assemblyName: "compilation" + Guid.NewGuid(),
-                syntaxTrees: sources.Select(x => CSharpSyntaxTree.ParseText(x, new CSharpParseOptions(LanguageVersion.Latest))),
-                references: new[]
-                {
                     MetadataReference.CreateFromFile(typeof(Observable).GetTypeInfo().Assembly.Location),
                     MetadataReference.CreateFromFile(typeof(IServiceProvider).GetTypeInfo().Assembly.Location),
                     MetadataReference.CreateFromFile(Path.Combine(assemblyPath, "mscorlib.dll")),
@@ -45,28 +45,27 @@ namespace Minimalist.Reactive.SourceGenerator.Tests
                     MetadataReference.CreateFromFile(Path.Combine(assemblyPath, "System.Linq.Expressions.dll")),
                     MetadataReference.CreateFromFile(Path.Combine(assemblyPath, "System.ObjectModel.dll")),
                     MetadataReference.CreateFromFile(Path.Combine(assemblyPath, "System.Private.CoreLib.dll")),
-                },
-                options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, deterministic: true));
-        }
-
-        /// <summary>
-        /// Executes the source generators.
-        /// </summary>
-        /// <param name="compilation">The target compilation.</param>
-        /// <param name="diagnostics">The resulting diagnostics.</param>
-        /// <param name="generators">The generators to include in the compilation.</param>
-        /// <returns>The new compilation after the generators have executed.</returns>
-        public static Compilation RunGenerators(Compilation compilation, out ImmutableArray<Diagnostic> diagnostics, params ISourceGenerator[] generators)
-        {
-            CreateDriver(compilation, generators).RunGeneratorsAndUpdateCompilation(compilation, out var outputCompilation, out diagnostics);
-            return outputCompilation;
-        }
-
-        private static GeneratorDriver CreateDriver(Compilation compilation, params ISourceGenerator[] generators) =>
-            CSharpGeneratorDriver.Create(
-                generators: ImmutableArray.Create(generators),
-                additionalTexts: ImmutableArray<AdditionalText>.Empty,
-                parseOptions: (CSharpParseOptions)compilation.SyntaxTrees.First().Options,
-                optionsProvider: null);
+            },
+            options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, deterministic: true));
     }
+
+    /// <summary>
+    /// Executes the source generators.
+    /// </summary>
+    /// <param name="compilation">The target compilation.</param>
+    /// <param name="diagnostics">The resulting diagnostics.</param>
+    /// <param name="generators">The generators to include in the compilation.</param>
+    /// <returns>The new compilation after the generators have executed.</returns>
+    public static Compilation RunGenerators(Compilation compilation, out ImmutableArray<Diagnostic> diagnostics, params ISourceGenerator[] generators)
+    {
+        CreateDriver(compilation, generators).RunGeneratorsAndUpdateCompilation(compilation, out var outputCompilation, out diagnostics);
+        return outputCompilation;
+    }
+
+    private static GeneratorDriver CreateDriver(Compilation compilation, params ISourceGenerator[] generators) =>
+        CSharpGeneratorDriver.Create(
+            generators: ImmutableArray.Create(generators),
+            additionalTexts: ImmutableArray<AdditionalText>.Empty,
+            parseOptions: (CSharpParseOptions)compilation.SyntaxTrees.First().Options,
+            optionsProvider: null);
 }

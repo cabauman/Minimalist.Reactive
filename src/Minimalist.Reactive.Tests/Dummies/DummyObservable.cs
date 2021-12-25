@@ -4,19 +4,18 @@
 
 using System;
 
-namespace ReactiveTests.Dummies
+namespace ReactiveTests.Dummies;
+
+internal class DummyObservable<T> : IObservable<T>
 {
-    internal class DummyObservable<T> : IObservable<T>
+    public static readonly DummyObservable<T> Instance = new DummyObservable<T>();
+
+    private DummyObservable()
     {
-        public static readonly DummyObservable<T> Instance = new DummyObservable<T>();
+    }
 
-        private DummyObservable()
-        {
-        }
-
-        public IDisposable Subscribe(IObserver<T> observer)
-        {
-            throw new NotImplementedException();
-        }
+    public IDisposable Subscribe(IObserver<T> observer)
+    {
+        throw new NotImplementedException();
     }
 }

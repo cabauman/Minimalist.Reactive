@@ -11,455 +11,454 @@ using Minimalist.Reactive.Testing;
 using ReactiveTests.Dummies;
 using Xunit;
 
-namespace ReactiveTests.Tests
-{
-    public class WhereTest : ReactiveTest
-    {
+namespace ReactiveTests.Tests;
 
-        [Fact]
-        public void Where_ArgumentChecking()
+public class WhereTest : ReactiveTest
+{
+
+    [Fact]
+    public void Where_ArgumentChecking()
+    {
+        ReactiveAssert.Throws<ArgumentNullException>(() => ((IObservable<int>)null).Where(DummyFunc<int, bool>.Instance));
+        ReactiveAssert.Throws<ArgumentNullException>(() => DummyObservable<int>.Instance.Where((Func<int, bool>)null));
+        ReactiveAssert.Throws<ArgumentNullException>(() => DummyObservable<int>.Instance.Where(DummyFunc<int, bool>.Instance).Subscribe(null));
+    }
+
+    private static bool IsPrime(int i)
+    {
+        if (i <= 1)
         {
-            ReactiveAssert.Throws<ArgumentNullException>(() => ((IObservable<int>)null).Where(DummyFunc<int, bool>.Instance));
-            ReactiveAssert.Throws<ArgumentNullException>(() => DummyObservable<int>.Instance.Where((Func<int, bool>)null));
-            ReactiveAssert.Throws<ArgumentNullException>(() => DummyObservable<int>.Instance.Where(DummyFunc<int, bool>.Instance).Subscribe(null));
+            return false;
         }
 
-        private static bool IsPrime(int i)
+        var max = (int)Math.Sqrt(i);
+        for (var j = 2; j <= max; ++j)
         {
-            if (i <= 1)
+            if (i % j == 0)
             {
                 return false;
             }
-
-            var max = (int)Math.Sqrt(i);
-            for (var j = 2; j <= max; ++j)
-            {
-                if (i % j == 0)
-                {
-                    return false;
-                }
-            }
-
-            return true;
         }
 
-        [Fact]
-        public void Where_Complete()
-        {
-            var scheduler = new TestScheduler();
+        return true;
+    }
 
-            var invoked = 0;
+    [Fact]
+    public void Where_Complete()
+    {
+        var scheduler = new TestScheduler();
 
-            var xs = scheduler.CreateHotObservable(
-                OnNext(110, 1),
-                OnNext(180, 2),
-                OnNext(230, 3),
-                OnNext(270, 4),
-                OnNext(340, 5),
-                OnNext(380, 6),
-                OnNext(390, 7),
-                OnNext(450, 8),
-                OnNext(470, 9),
-                OnNext(560, 10),
-                OnNext(580, 11),
-                OnCompleted<int>(600),
-                OnNext(610, 12),
-                OnError<int>(620, new Exception()),
-                OnCompleted<int>(630)
-            );
+        var invoked = 0;
 
-            var res = scheduler.Start(() =>
-                xs.Where(x =>
-                {
-                    invoked++;
-                    return IsPrime(x);
-                })
-            );
+        var xs = scheduler.CreateHotObservable(
+            OnNext(110, 1),
+            OnNext(180, 2),
+            OnNext(230, 3),
+            OnNext(270, 4),
+            OnNext(340, 5),
+            OnNext(380, 6),
+            OnNext(390, 7),
+            OnNext(450, 8),
+            OnNext(470, 9),
+            OnNext(560, 10),
+            OnNext(580, 11),
+            OnCompleted<int>(600),
+            OnNext(610, 12),
+            OnError<int>(620, new Exception()),
+            OnCompleted<int>(630)
+        );
 
-            res.Messages.AssertEqual(
-                OnNext(230, 3),
-                OnNext(340, 5),
-                OnNext(390, 7),
-                OnNext(580, 11),
-                OnCompleted<int>(600)
-            );
-
-            xs.Subscriptions.AssertEqual(
-                Subscribe(200, 600)
-            );
-
-            Assert.Equal(9, invoked);
-        }
-
-        [Fact]
-        public void Where_True()
-        {
-            var scheduler = new TestScheduler();
-
-            var invoked = 0;
-
-            var xs = scheduler.CreateHotObservable(
-                OnNext(110, 1),
-                OnNext(180, 2),
-                OnNext(230, 3),
-                OnNext(270, 4),
-                OnNext(340, 5),
-                OnNext(380, 6),
-                OnNext(390, 7),
-                OnNext(450, 8),
-                OnNext(470, 9),
-                OnNext(560, 10),
-                OnNext(580, 11),
-                OnCompleted<int>(600)
-            );
-
-            var res = scheduler.Start(() =>
-                xs.Where(x =>
-                {
-                    invoked++;
-                    return true;
-                })
-            );
-
-            res.Messages.AssertEqual(
-                OnNext(230, 3),
-                OnNext(270, 4),
-                OnNext(340, 5),
-                OnNext(380, 6),
-                OnNext(390, 7),
-                OnNext(450, 8),
-                OnNext(470, 9),
-                OnNext(560, 10),
-                OnNext(580, 11),
-                OnCompleted<int>(600)
-            );
-
-            xs.Subscriptions.AssertEqual(
-                Subscribe(200, 600)
-            );
-
-            Assert.Equal(9, invoked);
-        }
-
-        [Fact]
-        public void Where_False()
-        {
-            var scheduler = new TestScheduler();
-
-            var invoked = 0;
-
-            var xs = scheduler.CreateHotObservable(
-                OnNext(110, 1),
-                OnNext(180, 2),
-                OnNext(230, 3),
-                OnNext(270, 4),
-                OnNext(340, 5),
-                OnNext(380, 6),
-                OnNext(390, 7),
-                OnNext(450, 8),
-                OnNext(470, 9),
-                OnNext(560, 10),
-                OnNext(580, 11),
-                OnCompleted<int>(600)
-            );
-
-            var res = scheduler.Start(() =>
-                xs.Where(x =>
-                {
-                    invoked++;
-                    return false;
-                })
-            );
-
-            res.Messages.AssertEqual(
-                OnCompleted<int>(600)
-            );
-
-            xs.Subscriptions.AssertEqual(
-                Subscribe(200, 600)
-            );
-
-            Assert.Equal(9, invoked);
-        }
-
-        [Fact]
-        public void Where_Dispose()
-        {
-            var scheduler = new TestScheduler();
-
-            var invoked = 0;
-
-            var xs = scheduler.CreateHotObservable(
-                OnNext(110, 1),
-                OnNext(180, 2),
-                OnNext(230, 3),
-                OnNext(270, 4),
-                OnNext(340, 5),
-                OnNext(380, 6),
-                OnNext(390, 7),
-                OnNext(450, 8),
-                OnNext(470, 9),
-                OnNext(560, 10),
-                OnNext(580, 11),
-                OnCompleted<int>(600)
-            );
-
-            var res = scheduler.Start(() =>
-                xs.Where(x =>
-                {
-                    invoked++;
-                    return IsPrime(x);
-                }),
-                400
-            );
-
-            res.Messages.AssertEqual(
-                OnNext(230, 3),
-                OnNext(340, 5),
-                OnNext(390, 7)
-            );
-
-            xs.Subscriptions.AssertEqual(
-                Subscribe(200, 400)
-            );
-
-            Assert.Equal(5, invoked);
-        }
-
-        [Fact]
-        public void Where_Error()
-        {
-            var scheduler = new TestScheduler();
-
-            var invoked = 0;
-
-            var ex = new Exception();
-
-            var xs = scheduler.CreateHotObservable(
-                OnNext(110, 1),
-                OnNext(180, 2),
-                OnNext(230, 3),
-                OnNext(270, 4),
-                OnNext(340, 5),
-                OnNext(380, 6),
-                OnNext(390, 7),
-                OnNext(450, 8),
-                OnNext(470, 9),
-                OnNext(560, 10),
-                OnNext(580, 11),
-                OnError<int>(600, ex),
-                OnNext(610, 12),
-                OnError<int>(620, new Exception()),
-                OnCompleted<int>(630)
-            );
-
-            var res = scheduler.Start(() =>
-                xs.Where(x =>
-                {
-                    invoked++;
-                    return IsPrime(x);
-                })
-            );
-
-            res.Messages.AssertEqual(
-                OnNext(230, 3),
-                OnNext(340, 5),
-                OnNext(390, 7),
-                OnNext(580, 11),
-                OnError<int>(600, ex)
-            );
-
-            xs.Subscriptions.AssertEqual(
-                Subscribe(200, 600)
-            );
-
-            Assert.Equal(9, invoked);
-        }
-
-        [Fact]
-        public void Where_Throw()
-        {
-            var scheduler = new TestScheduler();
-
-            var invoked = 0;
-            var ex = new Exception();
-
-            var xs = scheduler.CreateHotObservable(
-                OnNext(110, 1),
-                OnNext(180, 2),
-                OnNext(230, 3),
-                OnNext(270, 4),
-                OnNext(340, 5),
-                OnNext(380, 6),
-                OnNext(390, 7),
-                OnNext(450, 8),
-                OnNext(470, 9),
-                OnNext(560, 10),
-                OnNext(580, 11),
-                OnCompleted<int>(600),
-                OnNext(610, 12),
-                OnError<int>(620, new Exception()),
-                OnCompleted<int>(630)
-            );
-
-            var res = scheduler.Start(() =>
-                xs.Where(x =>
-                {
-                    invoked++;
-                    if (x > 5)
-                    {
-                        throw ex;
-                    }
-
-                    return IsPrime(x);
-                })
-            );
-
-            res.Messages.AssertEqual(
-                OnNext(230, 3),
-                OnNext(340, 5),
-                OnError<int>(380, ex)
-            );
-
-            xs.Subscriptions.AssertEqual(
-                Subscribe(200, 380)
-            );
-
-            Assert.Equal(4, invoked);
-        }
-
-        [Fact]
-        public void Where_DisposeInPredicate()
-        {
-            var scheduler = new TestScheduler();
-
-            var invoked = 0;
-
-            var xs = scheduler.CreateHotObservable(
-                OnNext(110, 1),
-                OnNext(180, 2),
-                OnNext(230, 3),
-                OnNext(270, 4),
-                OnNext(340, 5),
-                OnNext(380, 6),
-                OnNext(390, 7),
-                OnNext(450, 8),
-                OnNext(470, 9),
-                OnNext(560, 10),
-                OnNext(580, 11),
-                OnCompleted<int>(600),
-                OnNext(610, 12),
-                OnError<int>(620, new Exception()),
-                OnCompleted<int>(630)
-            );
-
-            var res = scheduler.CreateObserver<int>();
-
-            var d = new SerialDisposable();
-            var ys = default(IObservable<int>);
-
-            scheduler.ScheduleAbsolute(Created, () => ys = xs.Where(x =>
+        var res = scheduler.Start(() =>
+            xs.Where(x =>
             {
                 invoked++;
-                if (x == 8)
+                return IsPrime(x);
+            })
+        );
+
+        res.Messages.AssertEqual(
+            OnNext(230, 3),
+            OnNext(340, 5),
+            OnNext(390, 7),
+            OnNext(580, 11),
+            OnCompleted<int>(600)
+        );
+
+        xs.Subscriptions.AssertEqual(
+            Subscribe(200, 600)
+        );
+
+        Assert.Equal(9, invoked);
+    }
+
+    [Fact]
+    public void Where_True()
+    {
+        var scheduler = new TestScheduler();
+
+        var invoked = 0;
+
+        var xs = scheduler.CreateHotObservable(
+            OnNext(110, 1),
+            OnNext(180, 2),
+            OnNext(230, 3),
+            OnNext(270, 4),
+            OnNext(340, 5),
+            OnNext(380, 6),
+            OnNext(390, 7),
+            OnNext(450, 8),
+            OnNext(470, 9),
+            OnNext(560, 10),
+            OnNext(580, 11),
+            OnCompleted<int>(600)
+        );
+
+        var res = scheduler.Start(() =>
+            xs.Where(x =>
+            {
+                invoked++;
+                return true;
+            })
+        );
+
+        res.Messages.AssertEqual(
+            OnNext(230, 3),
+            OnNext(270, 4),
+            OnNext(340, 5),
+            OnNext(380, 6),
+            OnNext(390, 7),
+            OnNext(450, 8),
+            OnNext(470, 9),
+            OnNext(560, 10),
+            OnNext(580, 11),
+            OnCompleted<int>(600)
+        );
+
+        xs.Subscriptions.AssertEqual(
+            Subscribe(200, 600)
+        );
+
+        Assert.Equal(9, invoked);
+    }
+
+    [Fact]
+    public void Where_False()
+    {
+        var scheduler = new TestScheduler();
+
+        var invoked = 0;
+
+        var xs = scheduler.CreateHotObservable(
+            OnNext(110, 1),
+            OnNext(180, 2),
+            OnNext(230, 3),
+            OnNext(270, 4),
+            OnNext(340, 5),
+            OnNext(380, 6),
+            OnNext(390, 7),
+            OnNext(450, 8),
+            OnNext(470, 9),
+            OnNext(560, 10),
+            OnNext(580, 11),
+            OnCompleted<int>(600)
+        );
+
+        var res = scheduler.Start(() =>
+            xs.Where(x =>
+            {
+                invoked++;
+                return false;
+            })
+        );
+
+        res.Messages.AssertEqual(
+            OnCompleted<int>(600)
+        );
+
+        xs.Subscriptions.AssertEqual(
+            Subscribe(200, 600)
+        );
+
+        Assert.Equal(9, invoked);
+    }
+
+    [Fact]
+    public void Where_Dispose()
+    {
+        var scheduler = new TestScheduler();
+
+        var invoked = 0;
+
+        var xs = scheduler.CreateHotObservable(
+            OnNext(110, 1),
+            OnNext(180, 2),
+            OnNext(230, 3),
+            OnNext(270, 4),
+            OnNext(340, 5),
+            OnNext(380, 6),
+            OnNext(390, 7),
+            OnNext(450, 8),
+            OnNext(470, 9),
+            OnNext(560, 10),
+            OnNext(580, 11),
+            OnCompleted<int>(600)
+        );
+
+        var res = scheduler.Start(() =>
+            xs.Where(x =>
+            {
+                invoked++;
+                return IsPrime(x);
+            }),
+            400
+        );
+
+        res.Messages.AssertEqual(
+            OnNext(230, 3),
+            OnNext(340, 5),
+            OnNext(390, 7)
+        );
+
+        xs.Subscriptions.AssertEqual(
+            Subscribe(200, 400)
+        );
+
+        Assert.Equal(5, invoked);
+    }
+
+    [Fact]
+    public void Where_Error()
+    {
+        var scheduler = new TestScheduler();
+
+        var invoked = 0;
+
+        var ex = new Exception();
+
+        var xs = scheduler.CreateHotObservable(
+            OnNext(110, 1),
+            OnNext(180, 2),
+            OnNext(230, 3),
+            OnNext(270, 4),
+            OnNext(340, 5),
+            OnNext(380, 6),
+            OnNext(390, 7),
+            OnNext(450, 8),
+            OnNext(470, 9),
+            OnNext(560, 10),
+            OnNext(580, 11),
+            OnError<int>(600, ex),
+            OnNext(610, 12),
+            OnError<int>(620, new Exception()),
+            OnCompleted<int>(630)
+        );
+
+        var res = scheduler.Start(() =>
+            xs.Where(x =>
+            {
+                invoked++;
+                return IsPrime(x);
+            })
+        );
+
+        res.Messages.AssertEqual(
+            OnNext(230, 3),
+            OnNext(340, 5),
+            OnNext(390, 7),
+            OnNext(580, 11),
+            OnError<int>(600, ex)
+        );
+
+        xs.Subscriptions.AssertEqual(
+            Subscribe(200, 600)
+        );
+
+        Assert.Equal(9, invoked);
+    }
+
+    [Fact]
+    public void Where_Throw()
+    {
+        var scheduler = new TestScheduler();
+
+        var invoked = 0;
+        var ex = new Exception();
+
+        var xs = scheduler.CreateHotObservable(
+            OnNext(110, 1),
+            OnNext(180, 2),
+            OnNext(230, 3),
+            OnNext(270, 4),
+            OnNext(340, 5),
+            OnNext(380, 6),
+            OnNext(390, 7),
+            OnNext(450, 8),
+            OnNext(470, 9),
+            OnNext(560, 10),
+            OnNext(580, 11),
+            OnCompleted<int>(600),
+            OnNext(610, 12),
+            OnError<int>(620, new Exception()),
+            OnCompleted<int>(630)
+        );
+
+        var res = scheduler.Start(() =>
+            xs.Where(x =>
+            {
+                invoked++;
+                if (x > 5)
                 {
-                    d.Dispose();
+                    throw ex;
                 }
 
                 return IsPrime(x);
-            }));
+            })
+        );
 
-            scheduler.ScheduleAbsolute(Subscribed, () => d.Disposable = ys.Subscribe(res));
+        res.Messages.AssertEqual(
+            OnNext(230, 3),
+            OnNext(340, 5),
+            OnError<int>(380, ex)
+        );
 
-            scheduler.ScheduleAbsolute(Disposed, () => d.Dispose());
+        xs.Subscriptions.AssertEqual(
+            Subscribe(200, 380)
+        );
 
-            scheduler.Start();
+        Assert.Equal(4, invoked);
+    }
 
-            res.Messages.AssertEqual(
-                OnNext(230, 3),
-                OnNext(340, 5),
-                OnNext(390, 7)
-            );
+    [Fact]
+    public void Where_DisposeInPredicate()
+    {
+        var scheduler = new TestScheduler();
 
-            xs.Subscriptions.AssertEqual(
-                Subscribe(200, 450)
-            );
+        var invoked = 0;
 
-            Assert.Equal(6, invoked);
-        }
+        var xs = scheduler.CreateHotObservable(
+            OnNext(110, 1),
+            OnNext(180, 2),
+            OnNext(230, 3),
+            OnNext(270, 4),
+            OnNext(340, 5),
+            OnNext(380, 6),
+            OnNext(390, 7),
+            OnNext(450, 8),
+            OnNext(470, 9),
+            OnNext(560, 10),
+            OnNext(580, 11),
+            OnCompleted<int>(600),
+            OnNext(610, 12),
+            OnError<int>(620, new Exception()),
+            OnCompleted<int>(630)
+        );
 
-        [Fact]
-        public void WhereWhereOptimization_Regular()
+        var res = scheduler.CreateObserver<int>();
+
+        var d = new SerialDisposable();
+        var ys = default(IObservable<int>);
+
+        scheduler.ScheduleAbsolute(Created, () => ys = xs.Where(x =>
         {
-            var scheduler = new TestScheduler();
+            invoked++;
+            if (x == 8)
+            {
+                d.Dispose();
+            }
 
-            var xs = scheduler.CreateHotObservable(
-                OnNext(110, 1),
-                OnNext(180, 2),
-                OnNext(230, 3),
-                OnNext(270, 4),
-                OnNext(340, 5),
-                OnNext(380, 6),
-                OnNext(390, 7),
-                OnNext(450, 8),
-                OnNext(470, 9),
-                OnNext(560, 10),
-                OnNext(580, 11),
-                OnCompleted<int>(600)
-            );
+            return IsPrime(x);
+        }));
 
-            var res = scheduler.Start(() =>
-                xs.Where(x => x > 3).Where(x => x % 2 == 0)
-            );
+        scheduler.ScheduleAbsolute(Subscribed, () => d.Disposable = ys.Subscribe(res));
 
-            res.Messages.AssertEqual(
-                OnNext(270, 4),
-                OnNext(380, 6),
-                OnNext(450, 8),
-                OnNext(560, 10),
-                OnCompleted<int>(600)
-            );
-        }
+        scheduler.ScheduleAbsolute(Disposed, () => d.Dispose());
 
-        [Fact]
-        public void WhereWhereOptimization_SecondPredicateThrows()
-        {
-            var scheduler = new TestScheduler();
+        scheduler.Start();
 
-            var xs = scheduler.CreateHotObservable(
-                OnNext(110, 1),
-                OnNext(180, 2),
-                OnNext(230, 3),
-                OnNext(270, 4),
-                OnNext(340, 5),
-                OnNext(380, 6),
-                OnNext(390, 7),
-                OnNext(450, 8),
-                OnNext(470, 9),
-                OnNext(560, 10),
-                OnNext(580, 11),
-                OnCompleted<int>(600)
-            );
+        res.Messages.AssertEqual(
+            OnNext(230, 3),
+            OnNext(340, 5),
+            OnNext(390, 7)
+        );
 
-            var res = scheduler.Start(() =>
-                xs.Where(x => x > 3).Where(x =>
+        xs.Subscriptions.AssertEqual(
+            Subscribe(200, 450)
+        );
+
+        Assert.Equal(6, invoked);
+    }
+
+    [Fact]
+    public void WhereWhereOptimization_Regular()
+    {
+        var scheduler = new TestScheduler();
+
+        var xs = scheduler.CreateHotObservable(
+            OnNext(110, 1),
+            OnNext(180, 2),
+            OnNext(230, 3),
+            OnNext(270, 4),
+            OnNext(340, 5),
+            OnNext(380, 6),
+            OnNext(390, 7),
+            OnNext(450, 8),
+            OnNext(470, 9),
+            OnNext(560, 10),
+            OnNext(580, 11),
+            OnCompleted<int>(600)
+        );
+
+        var res = scheduler.Start(() =>
+            xs.Where(x => x > 3).Where(x => x % 2 == 0)
+        );
+
+        res.Messages.AssertEqual(
+            OnNext(270, 4),
+            OnNext(380, 6),
+            OnNext(450, 8),
+            OnNext(560, 10),
+            OnCompleted<int>(600)
+        );
+    }
+
+    [Fact]
+    public void WhereWhereOptimization_SecondPredicateThrows()
+    {
+        var scheduler = new TestScheduler();
+
+        var xs = scheduler.CreateHotObservable(
+            OnNext(110, 1),
+            OnNext(180, 2),
+            OnNext(230, 3),
+            OnNext(270, 4),
+            OnNext(340, 5),
+            OnNext(380, 6),
+            OnNext(390, 7),
+            OnNext(450, 8),
+            OnNext(470, 9),
+            OnNext(560, 10),
+            OnNext(580, 11),
+            OnCompleted<int>(600)
+        );
+
+        var res = scheduler.Start(() =>
+            xs.Where(x => x > 3).Where(x =>
+            {
+                if (x <= 3)
                 {
-                    if (x <= 3)
-                    {
-                        throw new Exception();
-                    }
+                    throw new Exception();
+                }
 
-                    return x % 2 == 0;
-                })
-            );
+                return x % 2 == 0;
+            })
+        );
 
-            res.Messages.AssertEqual(
-                OnNext(270, 4),
-                OnNext(380, 6),
-                OnNext(450, 8),
-                OnNext(560, 10),
-                OnCompleted<int>(600)
-            );
-        }
+        res.Messages.AssertEqual(
+            OnNext(270, 4),
+            OnNext(380, 6),
+            OnNext(450, 8),
+            OnNext(560, 10),
+            OnCompleted<int>(600)
+        );
     }
 }

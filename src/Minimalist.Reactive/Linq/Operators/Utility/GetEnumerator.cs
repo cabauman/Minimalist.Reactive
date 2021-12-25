@@ -4,94 +4,93 @@ using Minimalist.Reactive.Disposables;
 using System.Collections;
 using System.Runtime.ExceptionServices;
 
-namespace Minimalist.Reactive.Linq
+namespace Minimalist.Reactive.Linq;
+
+internal sealed class GetEnumerator<TSource> : IEnumerator<TSource>, IObserver<TSource>
 {
-    internal sealed class GetEnumerator<TSource> : IEnumerator<TSource>, IObserver<TSource>
+    private readonly ConcurrentQueue<TSource> _queue;
+    private TSource? _current;
+    private Exception? _error;
+    private bool _done;
+    private bool _disposed;
+    private SingleAssignmentDisposableValue _subscription;
+
+    private readonly SemaphoreSlim _gate;
+
+    public GetEnumerator()
     {
-        private readonly ConcurrentQueue<TSource> _queue;
-        private TSource? _current;
-        private Exception? _error;
-        private bool _done;
-        private bool _disposed;
-        private SingleAssignmentDisposableValue _subscription;
+        _queue = new ConcurrentQueue<TSource>();
+        _gate = new SemaphoreSlim(0);
+    }
 
-        private readonly SemaphoreSlim _gate;
+    public IEnumerator<TSource> Run(IObservable<TSource> source)
+    {
+        //
+        // [OK] Use of unsafe Subscribe: non-pretentious exact mirror with the dual GetEnumerator method.
+        //
+        _subscription.Disposable = source.Subscribe/*Unsafe*/(this);
+        return this;
+    }
 
-        public GetEnumerator()
+    public void OnNext(TSource value)
+    {
+        _queue.Enqueue(value);
+        _gate.Release();
+    }
+
+    public void OnError(Exception error)
+    {
+        _error = error;
+        _subscription.Dispose();
+        _gate.Release();
+    }
+
+    public void OnCompleted()
+    {
+        _done = true;
+        _subscription.Dispose();
+        _gate.Release();
+    }
+
+    public bool MoveNext()
+    {
+        _gate.Wait();
+
+        if (_disposed)
         {
-            _queue = new ConcurrentQueue<TSource>();
-            _gate = new SemaphoreSlim(0);
+            throw new ObjectDisposedException("");
         }
 
-        public IEnumerator<TSource> Run(IObservable<TSource> source)
+        if (_queue.TryDequeue(out _current))
         {
-            //
-            // [OK] Use of unsafe Subscribe: non-pretentious exact mirror with the dual GetEnumerator method.
-            //
-            _subscription.Disposable = source.Subscribe/*Unsafe*/(this);
-            return this;
+            return true;
         }
 
-        public void OnNext(TSource value)
+        if (_error != null)
         {
-            _queue.Enqueue(value);
-            _gate.Release();
+            ExceptionDispatchInfo.Capture(_error).Throw();
         }
 
-        public void OnError(Exception error)
-        {
-            _error = error;
-            _subscription.Dispose();
-            _gate.Release();
-        }
+        Debug.Assert(_done);
 
-        public void OnCompleted()
-        {
-            _done = true;
-            _subscription.Dispose();
-            _gate.Release();
-        }
+        _gate.Release(); // In the (rare) case the user calls MoveNext again we shouldn't block!
+        return false;
+    }
 
-        public bool MoveNext()
-        {
-            _gate.Wait();
+    public TSource Current => _current!; // NB: Only called after MoveNext returns true and assigns a value.
 
-            if (_disposed)
-            {
-                throw new ObjectDisposedException("");
-            }
+    object IEnumerator.Current => _current!;
 
-            if (_queue.TryDequeue(out _current))
-            {
-                return true;
-            }
+    public void Dispose()
+    {
+        _subscription.Dispose();
 
-            if (_error != null)
-            {
-                ExceptionDispatchInfo.Capture(_error).Throw();
-            }
+        _disposed = true;
+        _gate.Release();
+    }
 
-            Debug.Assert(_done);
-
-            _gate.Release(); // In the (rare) case the user calls MoveNext again we shouldn't block!
-            return false;
-        }
-
-        public TSource Current => _current!; // NB: Only called after MoveNext returns true and assigns a value.
-
-        object IEnumerator.Current => _current!;
-
-        public void Dispose()
-        {
-            _subscription.Dispose();
-
-            _disposed = true;
-            _gate.Release();
-        }
-
-        public void Reset()
-        {
-            throw new NotSupportedException();
-        }
+    public void Reset()
+    {
+        throw new NotSupportedException();
     }
 }

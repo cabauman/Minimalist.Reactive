@@ -1,13 +1,12 @@
-﻿namespace Minimalist.Reactive
+﻿namespace Minimalist.Reactive;
+
+internal sealed class NopObserver<T> : IObserver<T>
 {
-    internal sealed class NopObserver<T> : IObserver<T>
-    {
-        public static readonly IObserver<T> Instance = new NopObserver<T>();
+    public static readonly IObserver<T> Instance = new NopObserver<T>();
 
-        public void OnCompleted() { }
+    public void OnCompleted() { }
 
-        public void OnError(Exception error) { }
+    public void OnError(Exception error) { }
 
-        public void OnNext(T value) { }
-    }
+    public void OnNext(T value) { }
 }

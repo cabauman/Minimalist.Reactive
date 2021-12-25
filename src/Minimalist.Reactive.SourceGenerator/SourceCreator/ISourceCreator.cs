@@ -1,9 +1,8 @@
 ﻿using Minimalist.Reactive.SourceGenerator.Blueprints;
 
-namespace Minimalist.Reactive.SourceGenerator.SourceCreator
+namespace Minimalist.Reactive.SourceGenerator.SourceCreator;
+
+internal interface ISourceCreator
 {
-    internal interface ISourceCreator
-    {
-        string Create(TargetClassBlueprint classDatum);
-    }
+    string Create(TargetClassBlueprint classDatum);
 }

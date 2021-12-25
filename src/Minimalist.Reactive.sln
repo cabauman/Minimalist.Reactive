@@ -15,7 +15,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Minimalist.Reactive.SourceG
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Minimalist.Reactive.SourceGenerator.Sandbox", "Minimalist.Reactive.SourceGenerator.Sandbox\Minimalist.Reactive.SourceGenerator.Sandbox.csproj", "{A867BF75-D4E1-43DF-8786-F02846C9D1A4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minimalist.Reactive.SourceGenerator.Tests", "Minimalist.Reactive.SourceGenerator.Tests\Minimalist.Reactive.SourceGenerator.Tests.csproj", "{51D1BA9D-D1BC-4901-8B29-17FFD9AC26CC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Minimalist.Reactive.SourceGenerator.Tests", "Minimalist.Reactive.SourceGenerator.Tests\Minimalist.Reactive.SourceGenerator.Tests.csproj", "{51D1BA9D-D1BC-4901-8B29-17FFD9AC26CC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7FE032F7-31BD-487B-947A-A70D97C5839B}"
+	ProjectSection(SolutionItems) = preProject
+		..\.editorconfig = ..\.editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

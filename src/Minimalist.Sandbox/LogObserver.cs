@@ -1,20 +1,19 @@
-﻿namespace Minimalist.Reactive.Sandbox
+﻿namespace Minimalist.Reactive.Sandbox;
+
+public class LogObserver<T> : IObserver<T>
 {
-    public class LogObserver<T> : IObserver<T>
+    public void OnNext(T value)
     {
-        public void OnNext(T value)
-        {
-            Console.WriteLine($"OnNext: {value}");
-        }
+        Console.WriteLine($"OnNext: {value}");
+    }
 
-        public void OnCompleted()
-        {
-            Console.WriteLine("OnCompleted");
-        }
+    public void OnCompleted()
+    {
+        Console.WriteLine("OnCompleted");
+    }
 
-        public void OnError(Exception error)
-        {
-            Console.WriteLine($"OnError: {error}");
-        }
+    public void OnError(Exception error)
+    {
+        Console.WriteLine($"OnError: {error}");
     }
 }
