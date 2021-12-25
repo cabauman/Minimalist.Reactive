@@ -7,5 +7,7 @@
         public bool IsInLoop { get; set; }
 
         public int LocalVarCounter { get; set; }
+
+        public string IsUpstreamCompleteFieldName { get; set; }
     }
 }

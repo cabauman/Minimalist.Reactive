@@ -2,18 +2,19 @@
 
 namespace Minimalist.Reactive.SourceGenerator.Blueprints
 {
-    internal class ObservablePropertyDatum
+    internal class TargetClassPropertyBlueprint
     {
         public string Name { get; set; }
 
-        //public string BackingFieldName { get; set; }
+        public string BackingFieldName { get; set; }
 
         // CustomObservableClassName
         public string OriginalMethodName { get; set; }
 
-        // Might have to change this to be the whole type for special cases like IConnectableObservable.
+        public string InstanceTypeName { get; set; }
+
         // Think about making this a string so we don't leave the "to string" logic up to the source creator.
-        public ITypeSymbol GenericType { get; set; } // int for IObservable<int>
+        public ITypeSymbol ReturnType { get; set; }
 
         // Think about making this a string so we don't leave the "to string" logic up to the source creator.
         public Accessibility Accessibility { get; set; }

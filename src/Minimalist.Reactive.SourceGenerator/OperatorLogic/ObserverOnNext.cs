@@ -3,15 +3,17 @@ using Minimalist.Reactive.SourceGenerator.SourceCreator;
 
 namespace Minimalist.Reactive.SourceGenerator.OperatorData
 {
-    internal class ObserverOnNext : IOperatorDatum
+    internal class ObserverOnNext : IOperatorLogic
     {
         public string Name { get; }
 
         public bool RequiresScheduling => false;
 
-        public IReadOnlyList<ArgDatum> ArgData { get; }
+        public string GenericTypeArgument => throw new NotImplementedException();
 
-        public IReadOnlyList<FieldDatum> Fields => Array.Empty<FieldDatum>();
+        public IReadOnlyList<OperatorArgument> ArgData { get; }
+
+        public IReadOnlyList<ObservableClassFieldBlueprint> Fields => Array.Empty<ObservableClassFieldBlueprint>();
 
         public OperatorResult GetSource(RxSourceCreatorContext context)
         {

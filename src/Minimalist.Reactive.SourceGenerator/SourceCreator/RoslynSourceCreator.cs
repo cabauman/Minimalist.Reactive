@@ -4,9 +4,12 @@ namespace Minimalist.Reactive.SourceGenerator.SourceCreator
 {
     internal class RoslynSourceCreator : ISourceCreator
     {
-        public string Create(ClassDatum classDatum)
+        public string Create(TargetClassBlueprint classDatum)
         {
-            throw new NotImplementedException();
+            foreach (var property in classDatum.Properties)
+            {
+            }
+            return string.Empty;
         }
     }
 }

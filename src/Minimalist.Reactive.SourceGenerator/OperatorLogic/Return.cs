@@ -3,17 +3,20 @@ using Minimalist.Reactive.SourceGenerator.SourceCreator;
 
 namespace Minimalist.Reactive.SourceGenerator.OperatorData
 {
-    internal class Return : IOperatorDatum
+    internal class Return : IOperatorLogic
     {
+        private readonly IReadOnlyList<OperatorArgument> _argData;
         private readonly string? _schedulerArgName;
 
-        public Return(List<ArgDatum> argData)
+        public Return(string genericTypeArgument, List<OperatorArgument> argData)
         {
-            ArgData = argData;
+            GenericTypeArgument = genericTypeArgument;
+            _argData = argData;
+            // TODO: Move this calculation to a utility method.
             if (argData.Count > 1 && argData[1].Type.Name == "IScheduler")
             {
                 _schedulerArgName = argData[1].Expression.ToString();
-                if (argData[1].IsMemberOfTargetClass)
+                if (argData[1].DoesOriginateFromTargetClass)
                 {
                     if (_schedulerArgName.StartsWith("this."))
                     {
@@ -23,21 +26,19 @@ namespace Minimalist.Reactive.SourceGenerator.OperatorData
                 }
             }
 
-            Fields = Array.Empty<FieldDatum>();
+            Fields = Array.Empty<ObservableClassFieldBlueprint>();
         }
-
-        public string Name => "Return";
 
         public bool RequiresScheduling => _schedulerArgName != null;
 
-        public IReadOnlyList<ArgDatum> ArgData { get; }
+        public string GenericTypeArgument { get; }
 
-        public IReadOnlyList<FieldDatum> Fields { get; }
+        public IReadOnlyList<ObservableClassFieldBlueprint> Fields { get; }
 
         public OperatorResult GetSource(RxSourceCreatorContext context)
         {
             int localVarCounter = context.LocalVarCounter;
-            var value = ArgData[0].Expression.ToString();
+            var value = _argData[0].Expression.ToString();
             if (RequiresScheduling)
             {
                 return new OperatorResult
@@ -51,7 +52,7 @@ _disposables.Add({_schedulerArgName}.ScheduleAction(this, static @this => @this.
             return new OperatorResult
             {
                 Source = @$"
-_isUpstreamComplete = true;
+{context.IsUpstreamCompleteFieldName} = true;
 var x{localVarCounter} = {value};
 ",
             };

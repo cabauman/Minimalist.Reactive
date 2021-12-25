@@ -3,7 +3,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Minimalist.Reactive.SourceGenerator.Blueprints
 {
-    internal class ArgDatum
+    internal class OperatorArgument
     {
         public string ParameterName { get; set; }
 
@@ -11,6 +11,6 @@ namespace Minimalist.Reactive.SourceGenerator.Blueprints
 
         public ExpressionSyntax Expression { get; set; }
 
-        public bool IsMemberOfTargetClass { get; set; }
+        public bool DoesOriginateFromTargetClass { get; set; }
     }
 }

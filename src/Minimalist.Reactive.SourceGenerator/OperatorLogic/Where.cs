@@ -5,20 +5,20 @@ using System.Text.RegularExpressions;
 
 namespace Minimalist.Reactive.SourceGenerator.OperatorData
 {
-    internal class Where : IOperatorDatum
+    internal class Where : IOperatorLogic
     {
-        public Where(List<ArgDatum> argData)
-        {
-            ArgData = argData;
-        }
+        private readonly IReadOnlyList<OperatorArgument> _argData;
 
-        public string Name { get; }
+        public Where(List<OperatorArgument> argData)
+        {
+            _argData = argData;
+        }
 
         public bool RequiresScheduling => false;
 
-        public IReadOnlyList<ArgDatum> ArgData { get; }
+        public string GenericTypeArgument => throw new NotImplementedException();
 
-        public IReadOnlyList<FieldDatum> Fields => Array.Empty<FieldDatum>();
+        public IReadOnlyList<ObservableClassFieldBlueprint> Fields => Array.Empty<ObservableClassFieldBlueprint>();
 
         public OperatorResult GetSource(RxSourceCreatorContext context)
         {
@@ -26,15 +26,23 @@ namespace Minimalist.Reactive.SourceGenerator.OperatorData
             bool isInLoop = context.IsInLoop;
             var predicate = "";
             var lambdaParam = "";
-            if (ArgData[0].Expression is LambdaExpressionSyntax lambda)
+            // TODO: Handle method group.
+            // TODO: Move all this lambda handling logic to testable helper method.
+            if (_argData[0].Expression is LambdaExpressionSyntax lambda)
             {
                 predicate = lambda.Body.ToString();
                 if (lambda is SimpleLambdaExpressionSyntax simpleLambda)
                 {
                     lambdaParam = simpleLambda.Parameter.ToString();
                 }
+                else if (lambda is ParenthesizedLambdaExpressionSyntax parenthesizedLambda)
+                {
+                    // TODO: Handle multiple parameters.
+                    lambdaParam = parenthesizedLambda.ParameterList.Parameters[0].ToString();
+                }
             }
 
+            // TODO: Extract regex logic to testable helper method.
             var localVarName = $"x{context.LocalVarCounter}";
             var regex = new Regex($"(?<=[^a-zA-Z_@]|^){lambdaParam}(?=[^a-zA-Z_0-9]|$)");
             predicate = regex.Replace(predicate, localVarName, 1);
@@ -64,7 +72,7 @@ namespace Minimalist.Reactive.SourceGenerator.OperatorData
                 Source = @$"
 if (!({predicate}))
 {{
-    if (_isUpstreamComplete)
+    if ({context.IsUpstreamCompleteFieldName})
     {{
         {observerVarName}.OnCompleted();
     }}

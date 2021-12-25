@@ -3,25 +3,25 @@ using Minimalist.Reactive.SourceGenerator.SourceCreator;
 
 namespace Minimalist.Reactive.SourceGenerator.OperatorData
 {
-    internal class Select : IOperatorDatum
+    internal class Select : IOperatorLogic
     {
-        public Select(List<ArgDatum> argData)
-        {
-            ArgData = argData;
-        }
+        private readonly IReadOnlyList<OperatorArgument> _argData;
 
-        public string Name { get; }
+        public Select(List<OperatorArgument> argData)
+        {
+            _argData = argData;
+        }
 
         public bool RequiresScheduling => false;
 
-        public IReadOnlyList<ArgDatum> ArgData { get; }
+        public string GenericTypeArgument => throw new NotImplementedException();
 
-        public IReadOnlyList<FieldDatum> Fields => Array.Empty<FieldDatum>();
+        public IReadOnlyList<ObservableClassFieldBlueprint> Fields => Array.Empty<ObservableClassFieldBlueprint>();
 
         public OperatorResult GetSource(RxSourceCreatorContext context)
         {
             int localVarCounter = context.LocalVarCounter;
-            var selector = ArgData[0].Expression.ToString();
+            var selector = _argData[0].Expression.ToString();
             return new OperatorResult
             {
                 Source = $"var x{localVarCounter} = {selector}(x{localVarCounter - 1});",

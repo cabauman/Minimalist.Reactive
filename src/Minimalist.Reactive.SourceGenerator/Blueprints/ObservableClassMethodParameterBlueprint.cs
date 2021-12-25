@@ -1,6 +1,7 @@
 ﻿namespace Minimalist.Reactive.SourceGenerator.Blueprints
 {
-    internal class ParameterDatum
+    // MethodParameterBlueprint
+    internal class ObservableClassMethodParameterBlueprint
     {
         public string Name { get; set; }
 
