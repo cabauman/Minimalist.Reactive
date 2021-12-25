@@ -1,11 +1,9 @@
-﻿using Minimalist.Reactive.SourceGenerator.OperatorData;
+﻿using Minimalist.Reactive.SourceGenerator.Blueprints;
 
 namespace Minimalist.Reactive.SourceGenerator.SourceCreator
 {
     internal interface ISourceCreator
     {
-        //OperatorResult Where(OperatorDatum operatorData);
-
-        //OperatorResult Return(OperatorDatum operatorData);
+        string Create(ClassDatum classDatum);
     }
 }

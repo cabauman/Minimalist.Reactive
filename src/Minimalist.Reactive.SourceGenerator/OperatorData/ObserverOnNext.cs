@@ -1,4 +1,5 @@
-﻿using Minimalist.Reactive.SourceGenerator.SourceCreator;
+﻿using Minimalist.Reactive.SourceGenerator.Blueprints;
+using Minimalist.Reactive.SourceGenerator.SourceCreator;
 
 namespace Minimalist.Reactive.SourceGenerator.OperatorData
 {

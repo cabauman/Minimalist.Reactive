@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Minimalist.Reactive.SourceGenerator.Blueprints;
 using Minimalist.Reactive.SourceGenerator.SourceCreator;
 using System.Text.RegularExpressions;
 

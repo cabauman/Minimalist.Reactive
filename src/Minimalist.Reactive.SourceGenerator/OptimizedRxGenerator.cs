@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
+using Minimalist.Reactive.SourceGenerator.Blueprints;
 using Minimalist.Reactive.SourceGenerator.OperatorData;
 using Minimalist.Reactive.SourceGenerator.SourceCreator;
 using System.Text;
@@ -23,15 +24,6 @@ namespace Minimalist.Reactive
 
         public void Initialize(GeneratorInitializationContext context)
         {
-            //var where = new Where();
-            //ISourceCreator sourceCreator = new StringBuilderSourceCreator();
-            //var source = where.Accept(sourceCreator);
-            //IOperatorData[] operatorData = new[] { where };
-            //foreach (var operatorDatum in operatorData)
-            //{
-            //    operatorDatum.Accept(sourceCreator);
-            //}
-
             context.RegisterForPostInitialization((i) => i.AddSource("RxifyAttribute", AttributeText));
             context.RegisterForSyntaxNotifications(() => new SyntaxReceiver2());
         }
@@ -54,7 +46,7 @@ namespace Minimalist.Reactive
             }
         }
 
-        private ClassDatum? ProcessClass(INamedTypeSymbol classSymbol, List<Data> methods, Compilation compilation)
+        private ClassDatum? ProcessClass(INamedTypeSymbol classSymbol, List<RxifyInput> methods, Compilation compilation)
         {
             if (!classSymbol.ContainingSymbol.Equals(classSymbol.ContainingNamespace, SymbolEqualityComparer.Default))
             {
@@ -79,30 +71,44 @@ namespace Minimalist.Reactive
             };
         }
 
-        private ClassContent ProcessMethod(Data method, Compilation compilation, string className)
+        private ClassContent ProcessMethod(RxifyInput method, Compilation compilation, string className)
         {
-            var accessModifier = method.Symbol.DeclaredAccessibility.ToFriendlyString();
-            var returnType = method.Symbol.ReturnType.ToDisplayString();
-            var genericReturnType = (method.Symbol.ReturnType as INamedTypeSymbol).TypeArguments[0];
+            if (method.Symbol.ReturnType is not INamedTypeSymbol returnType)
+            {
+                return null;
+            }
+            var genericReturnType = returnType.TypeArguments[0];
             var methodName = method.Symbol.Name;
-            var propertySource = $"{accessModifier} IObservable<{genericReturnType.ToDisplayString()}> {methodName}Property {{ get; }} = new {methodName}Observable();";
 
             return new ClassContent
             {
-                PropertyDatum = new ObservablePropertyDatum { Name = $"{methodName}Property", OriginalMethodName = methodName, GenericType = method.Symbol.ReturnType, Accessibility = method.Symbol.DeclaredAccessibility },
+                PropertyDatum = new ObservablePropertyDatum
+                {
+                    Name = $"{methodName}Property",
+                    OriginalMethodName = methodName,
+                    GenericType = method.Symbol.ReturnType,
+                    Accessibility = method.Symbol.DeclaredAccessibility
+                },
                 ClassDatum = ProcessObservable(method.Symbol, method.Syntax, compilation, genericReturnType, className),
             };
         }
 
-        private NestedClassDatum ProcessObservable(IMethodSymbol methodSymbol, MethodDeclarationSyntax methodSyntax, Compilation compilation, ITypeSymbol genericObserverType, string className)
+        private CustomObservableClass ProcessObservable(IMethodSymbol methodSymbol, MethodDeclarationSyntax methodSyntax, Compilation compilation, ITypeSymbol genericObserverType, string className)
         {
             var model = compilation.GetSemanticModel(methodSyntax.SyntaxTree);
             var invocationExpressions = new List<InvocationExpressionSyntax>();
-            InvocationExpressionSyntax current = methodSyntax.DescendantNodes().OfType<InvocationExpressionSyntax>().FirstOrDefault();
+            var current = methodSyntax.DescendantNodes().OfType<InvocationExpressionSyntax>().FirstOrDefault();
             while (current != null)
             {
                 invocationExpressions.Add(current);
-                current = ((MemberAccessExpressionSyntax)current.Expression).Expression as InvocationExpressionSyntax;
+                if (current.Expression is MemberAccessExpressionSyntax mae)
+                {
+                    current = mae.Expression as InvocationExpressionSyntax;
+                }
+                else
+                {
+                    current = null;
+                }
             }
             invocationExpressions.Reverse();
             var operatorFields = new List<FieldDatum>();
@@ -122,13 +128,13 @@ namespace Minimalist.Reactive
                     {
                         current1 = memberAccessExpression.Expression;
                     }
-                    var isParentMember = false;
+                    var isMemberOfTargetClass = false;
                     var argSymbol = model.GetSymbolInfo(current1).Symbol;
                     if (argSymbol is not null && argSymbol.ContainingType.Name.Equals(className))
                     {
-                        isParentMember = true;
+                        isMemberOfTargetClass = true;
                     }
-                    var parameterDatum = new ArgDatum { ParameterName = parameters[i].Name, Type = parameters[i].Type, Expression = arguments[i].Expression, IsMemberOfTargetClass = isParentMember };
+                    var parameterDatum = new ArgDatum { ParameterName = parameters[i].Name, Type = parameters[i].Type, Expression = arguments[i].Expression, IsMemberOfTargetClass = isMemberOfTargetClass };
                     parameterData.Add(parameterDatum);
                 }
 
@@ -140,7 +146,21 @@ namespace Minimalist.Reactive
                 if (operatorDatum.RequiresScheduling)
                 {
                     operatorData = new List<IOperatorDatum>();
-                    var methodDatum = new MethodDatum { Name = $"Tick{counter++}", Accessibility = "private", ReturnType = "void", ParameterData = new[] { new ParameterDatum { Name = "x0", Type = operatorGenericReturnType } }, OperatorData = operatorData };
+                    var methodDatum = new MethodDatum
+                    {
+                        Name = $"Tick{counter++}",
+                        Accessibility = "private",
+                        ReturnType = "void",
+                        ParameterData = new[]
+                        {
+                            new ParameterDatum
+                            {
+                                Name = "x0",
+                                Type = operatorGenericReturnType
+                            }
+                        },
+                        OperatorData = operatorData
+                    };
                     operatorMethods.Add(methodDatum);
                 }
             }
@@ -148,7 +168,7 @@ namespace Minimalist.Reactive
             // Add one operatorDatum that calls observer.OnNext.
             operatorData.Add(new ObserverOnNext());
 
-            return new NestedClassDatum
+            return new CustomObservableClass
             {
                 ClassName = $"{methodSymbol.Name}Observable",
                 GenericType = genericObserverType.ToDisplayString(),
@@ -157,63 +177,4 @@ namespace Minimalist.Reactive
             };
         }
     }
-
-    internal static class OperatorInfoMap
-    {
-        public static IOperatorDatum GetInfo(string operatorName, List<ArgDatum> argData)
-        {
-            return operatorName switch
-            {
-                "Return" => new Return(argData),
-                "Where" => new Where(argData),
-                "Select" => new Select(argData),
-                _ => throw new NotSupportedException(),
-            };
-        }
-    }
 }
-
-//private class DoSomethingObservable : IObservable<int>
-//{
-//    public IDisposable Subscribe(IObserver<int> observer)
-//    {
-//        while (true)
-//        {
-//            var x = 1;
-//            if (!(x > 0))
-//            {
-//                continue;
-//            }
-//            var s1 = x.ToString();
-//            if (!(s1.Length > 0))
-//            {
-//                continue;
-//            }
-//            observer.OnNext(x);
-//        }
-//        observer.OnCompleted();
-//        return Disposable.Empty;
-//    }
-//}
-
-//private class DoSomethingObservable : IObservable<int>
-//{
-//    public IDisposable Subscribe(IObserver<int> observer)
-//    {
-//        scheduler.Schedule(TimerTick, period);
-//    }
-
-//    private void TimerTick(int value)
-//    {
-//        if (!(value > 0))
-//        {
-//            return;
-//        }
-//        observeOnScheduler1.Schedule(ObsverveOnTick1);
-//    }
-
-//    private void ObsverveOnTick1()
-//    {
-//        observer.OnNext(x);
-//    }
-//}

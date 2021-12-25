@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using Minimalist.Reactive.SourceGenerator.Blueprints;
+using System.Text;
 
 namespace Minimalist.Reactive.SourceGenerator.SourceCreator
 {
@@ -28,7 +29,7 @@ namespace {classDatum.NamespaceName}
         {
             return $@"
 {ProcessObservableProperty(classContent.PropertyDatum)}
-{ProcessNestedObservableClass(classContent.ClassDatum, className)}
+{ProcessCustomObservableClass(classContent.ClassDatum, className)}
 ";
         }
 
@@ -55,11 +56,11 @@ private {returnType} _{propertyName};
             return propertySource;
         }
 
-        public string ProcessNestedObservableClass(NestedClassDatum observableClassDatum, string parentClassName)
+        private string ProcessCustomObservableClass(CustomObservableClass observableClassDatum, string parentClassName)
         {
-            var returnType = observableClassDatum.GenericType;
+            var genericType = observableClassDatum.GenericType;
             var source = $@"
-    private class {observableClassDatum.ClassName} : IObservable<{returnType}>
+    private class {observableClassDatum.ClassName} : IObservable<{genericType}>
     {{
         // Only needed if there are member references.
         private readonly {parentClassName} _parent = null;
@@ -71,7 +72,7 @@ private {returnType} _{propertyName};
             _parent = parent;
         }}
 
-        public IDisposable Subscribe(IObserver<{returnType}> observer)
+        public IDisposable Subscribe(IObserver<{genericType}> observer)
         {{
             var subscription = new Subscription(observer, _parent);
             subscription.Run();
@@ -83,12 +84,12 @@ private {returnType} _{propertyName};
         public class Subscription : IDisposable
         {{
             private readonly {parentClassName} _parent = null;
-            private IObserver<{returnType}> _observer = null;
+            private IObserver<{genericType}> _observer = null;
             private bool _isUpstreamComplete = false;
             private bool _isDisposed = false;
             private List<IDisposable> _disposables = new List<IDisposable>();
 
-            public Subscription(IObserver<{returnType}> observer, {parentClassName} parent)
+            public Subscription(IObserver<{genericType}> observer, {parentClassName} parent)
             {{
                 _observer = observer;
                 _parent = parent;
@@ -146,14 +147,5 @@ private {returnType} _{propertyName};
             }
             return sb.ToString();
         }
-    }
-
-    internal class RxSourceCreatorContext
-    {
-        public bool IsWithinSubscribeMethod {  get; set; }
-
-        public bool IsInLoop { get; set; }
-
-        public int LocalVarCounter { get; set; }
     }
 }
