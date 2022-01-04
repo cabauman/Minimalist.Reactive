@@ -19,7 +19,7 @@ internal class ClassBlueprint : OperatorResult
 
     public IReadOnlyList<InterfaceSpecifierBlueprint> Interfaces { get; set; }
 
-    public IReadOnlyList<ConstructorBlueprint> ConstructorBlueprints { get; set; }
+    public IReadOnlyList<ConstructorBlueprint> Constructors { get; set; }
 
     public IReadOnlyList<FieldBlueprint> Fields { get; set; }
 
@@ -40,7 +40,7 @@ internal class ClassBlueprint : OperatorResult
 {accessModifier} {partialText} {ClassName} {inheritList}
 {{
     {string.Join("\n", Fields.Select(x => x.CreateSource()))}
-    {string.Join("\n", ConstructorBlueprints.Select(x => x.CreateSource()))}
+    {string.Join("\n", Constructors.Select(x => x.CreateSource()))}
     {string.Join("\n", Properties.Select(x => x.CreateSource()))}
     {string.Join("\n", Methods.Select(x => x.CreateSource()))}
     {string.Join("\n", Classes.Select(x => x.CreateSource()))}

@@ -105,10 +105,7 @@ public class RxSourceGeneratorTests
 
     public static IObservable<int> GetProperty(object target, string propertyName)
     {
-        if (target is null)
-        {
-            throw new ArgumentNullException(nameof(target));
-        }
+        ArgumentNullException.ThrowIfNull(target);
 
         if (string.IsNullOrWhiteSpace(propertyName))
         {

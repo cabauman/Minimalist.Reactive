@@ -84,10 +84,10 @@ private {returnType} _{propertyName};
         public class Subscription : IDisposable
         {{
             private readonly {parentClassName} _parent = null;
-            private IObserver<{genericType}> _observer = null;
+            private readonly IObserver<{genericType}> _observer = null;
             private bool _isUpstreamComplete = false;
             private bool _isDisposed = false;
-            private List<IDisposable> _disposables = new List<IDisposable>();
+            private readonly List<IDisposable> _disposables = new List<IDisposable>();
 
             public Subscription(IObserver<{genericType}> observer, {parentClassName} parent)
             {{
@@ -115,15 +115,22 @@ private {returnType} _{propertyName};
     private string ProcessMethod(ObservableClassMethodBlueprint methodDatum)
     {
         var parameters = string.Join(", ", methodDatum.Parameters.Select(x => $"{x.Type} {x.Name}"));
+
+        var disposeCheck = string.Empty;
+        if (methodDatum.Name != "Run")
+        {
+            disposeCheck = @"
+if (_isDisposed)
+{{
+    return;
+}}
+";
+        }
+        
         return $@"
 {methodDatum.Accessibility} {methodDatum.ReturnType} {methodDatum.Name}({parameters})
 {{
-    // Remove this case for Run()
-    if (_isDisposed)
-    {{
-        return;
-    }}
-    
+    {disposeCheck}
     {ProcessMethodContents(methodDatum)}
 }}
 ";

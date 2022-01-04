@@ -25,8 +25,8 @@ internal class Utils
     public static List<InvocationExpressionSyntax> ExtractInvocationExpressions(MethodDeclarationSyntax methodSyntax)
     {
         var invocationExpressions = new List<InvocationExpressionSyntax>();
-        // TODO: Be more restrictive for now by getting the first line of the body
-        // instead of the DescendantNodes() way.
+        // TODO: Be more restrictive by getting the first line of the body
+        // instead of the DescendantNodes() way. We can handle multiline body later.
         var current = methodSyntax.DescendantNodes().OfType<InvocationExpressionSyntax>().FirstOrDefault();
 
         while (current != null)
@@ -53,11 +53,13 @@ internal class Utils
         var operatorArgumentList = new List<OperatorArgument>();
         for (int i = 0; i < argumentSyntaxList.Count; i++)
         {
+            //bool doesOriginateFromTargetClass = DoesOriginateFromTargetClass(targetClassName, model, argumentSyntaxList[i]);
             var operatorArgument = new OperatorArgument
             {
                 ParameterName = parameterSymbols[i].Name,
                 Type = parameterSymbols[i].Type,
                 Expression = argumentSyntaxList[i].Expression,
+                DoesOriginateFromTargetClass = true, ///////////////////// TODO
             };
             operatorArgumentList.Add(operatorArgument);
         }
@@ -75,7 +77,7 @@ internal class OperatorLogicExtractor
         _semanticModelProvider = semanticModelProvider;
     }
 
-    public IReadOnlyList<IOperatorLogic> Create(MethodDeclarationSyntax methodDeclarationSyntax)
+    public IReadOnlyList<IOperatorLogic> Extract(MethodDeclarationSyntax methodDeclarationSyntax)
     {
         var model = _semanticModelProvider.GetSemanticModel(methodDeclarationSyntax.SyntaxTree);
         var invocationExpressions = Utils.ExtractInvocationExpressions(methodDeclarationSyntax);
@@ -129,6 +131,7 @@ internal class ClassBlueprintCreator
             //Fields = fields,
             Properties = properties,
             Classes = nestedClasses,
+            Components = classComponents,
         };
     }
 
@@ -145,9 +148,10 @@ internal class ClassBlueprintCreator
                 Name = $"{methodName}Property",
                 // TODO: Handle OutOfRangeException
                 BackingFieldName = $"_{char.ToLower(methodName[0]) + methodName.Substring(1)}",
-                //ReturnType = methodDatum.ReturnTypeName,
+                ReturnType = methodDatum.ReturnType,
                 InstanceTypeName = $"{methodName}Observable",
                 Accessibility = methodDatum.Accessibility,
+                OriginalMethodName = methodName,
             },
             ClassDatum = new ObservableClassBlueprint
             {
@@ -244,9 +248,9 @@ internal class ClassDatumExtractor
 {
     private readonly OperatorLogicExtractor _operatorLogicExtractor;
 
-    public ClassDatumExtractor(OperatorLogicExtractor operatorLogicCreator)
+    public ClassDatumExtractor(OperatorLogicExtractor operatorLogicExtractor)
     {
-        _operatorLogicExtractor = operatorLogicCreator;
+        _operatorLogicExtractor = operatorLogicExtractor;
     }
 
     public ExtractedClassDatum? Extract(INamedTypeSymbol classSymbol, IReadOnlyList<RxifyInput> methods)
@@ -287,7 +291,8 @@ internal class ClassDatumExtractor
         {
             MethodName = methodName,
             ReturnType = returnType,
-            OperatorLogicItems = _operatorLogicExtractor.Create(method.Syntax),
+            Accessibility = method.Symbol.DeclaredAccessibility,
+            OperatorLogicItems = _operatorLogicExtractor.Extract(method.Syntax),
         };
     }
 }

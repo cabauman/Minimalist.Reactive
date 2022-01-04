@@ -37,6 +37,10 @@ namespace Minimalist.Reactive
 
         Compilation compilation = context.Compilation;
         var sourceCreator = new StringBuilderSourceCreator();
+        var semanticModelProvider = new SemanticModelProvider(compilation);
+        var operatorLogicExtractor = new OperatorLogicExtractor(semanticModelProvider);
+        var classInfoExtractor = new ClassDatumExtractor(operatorLogicExtractor);
+        var classBlueprintCreator = new ClassBlueprintCreator();
 
         foreach (var group in syntaxReceiver.Candidates.GroupBy(method => method.Symbol.ContainingType))
         {
@@ -46,13 +50,8 @@ namespace Minimalist.Reactive
                 continue;
             }
 
-            var semanticModelProvider = new SemanticModelProvider(compilation);
-            var operatorLogicExtractor = new OperatorLogicExtractor(semanticModelProvider);
-            var classInfoExtractor = new ClassDatumExtractor(operatorLogicExtractor);
-            var classBlueprintCreator = new ClassBlueprintCreator();
-
             var classInfo = classInfoExtractor.Extract(group.Key, group.ToList());
-            var classBlueprint = classBlueprintCreator.Create(classInfo);
+            //var classBlueprint = classBlueprintCreator.Create(classInfo);
             var classSource = sourceCreator.Create(targetClassBlueprint);
 
             context.AddSource($"{group.Key.Name}.g.cs", SourceText.From(classSource, Encoding.UTF8));
