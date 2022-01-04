@@ -33,10 +33,19 @@ internal sealed class WhereOperator<T> : IObservable<T>
 
         public void OnNext(T value)
         {
-            if (_predicate(value))
+            try
             {
-                _observer.OnNext(value);
+                if (_predicate(value))
+                {
+                    _observer.OnNext(value);
+                }
             }
+            catch (Exception exception)
+            {
+                _observer.OnError(exception);
+                Dispose();
+            }
+
         }
 
         public void OnCompleted()
